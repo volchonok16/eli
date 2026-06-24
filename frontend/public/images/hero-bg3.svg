@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFAF9"/>
+      <stop offset="100%" stop-color="#F5F4F2"/>
+    </linearGradient>
+    <linearGradient id="serbian-foliage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A6741"/>
+      <stop offset="100%" stop-color="#2D3E27"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg3)"/>
+  <rect x="190" y="310" width="20" height="120" rx="1" fill="#44403C"/>
+  <polygon points="200,60 140,200 260,200" fill="url(#serbian-foliage)" opacity="0.95"/>
+  <polygon points="200,100 130,250 270,250" fill="url(#serbian-foliage)" opacity="0.85"/>
+  <polygon points="200,145 120,310 280,310" fill="url(#serbian-foliage)" opacity="0.7"/>
+  <ellipse cx="200" cy="230" rx="80" ry="100" fill="url(#serbian-foliage)" opacity="0.4"/>
+</svg>

@@ -5,7 +5,8 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { api, clearToken, getToken, setToken } from "../api";
+import { setToken, getToken, clearToken } from "@/api/client";
+import { login as apiLogin } from "@/api/endpoints/auth";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -19,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(getToken()));
 
   const login = useCallback(async (username: string, password: string) => {
-    const { token } = await api.login(username, password);
+    const { token } = await apiLogin(username, password);
     setToken(token);
     setIsAuthenticated(true);
   }, []);

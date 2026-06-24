@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAFAF9"/>
+      <stop offset="50%" stop-color="#F5F4F2"/>
+      <stop offset="100%" stop-color="#E7E5E4"/>
+    </linearGradient>
+    <linearGradient id="tree-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2D4A22"/>
+      <stop offset="100%" stop-color="#1A2E13"/>
+    </linearGradient>
+    <linearGradient id="tree-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A6B5A"/>
+      <stop offset="100%" stop-color="#2D4237"/>
+    </linearGradient>
+    <linearGradient id="tree-dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3D5A2E"/>
+      <stop offset="100%" stop-color="#1E2E16"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D6D3D1"/>
+      <stop offset="100%" stop-color="#C2BFBD"/>
+    </linearGradient>
+    <linearGradient id="accent-glow" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#CA8A04" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#CA8A04" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#sky)"/>
+
+  <rect x="0" y="700" width="1200" height="100" fill="url(#ground)"/>
+
+  <polygon points="100,700 110,350 120,700" fill="url(#tree-grad)" opacity="0.3"/>
+  <polygon points="150,700 165,280 180,700" fill="url(#tree-blue)" opacity="0.25"/>
+  <polygon points="220,700 240,200 260,700" fill="url(#tree-grad)" opacity="0.35"/>
+  <polygon points="300,700 320,310 340,700" fill="url(#tree-dark)" opacity="0.28"/>
+  <polygon points="370,700 390,250 410,700" fill="url(#tree-grad)" opacity="0.32"/>
+  <polygon points="440,700 465,180 490,700" fill="url(#tree-blue)" opacity="0.3"/>
+  <polygon points="520,700 540,300 560,700" fill="url(#tree-grad)" opacity="0.25"/>
+  <polygon points="580,700 605,160 630,700" fill="url(#tree-dark)" opacity="0.35"/>
+
+  <polygon points="680,700 700,220 720,700" fill="url(#tree-grad)" opacity="0.3"/>
+  <polygon points="750,700 770,280 790,700" fill="url(#tree-blue)" opacity="0.28"/>
+  <polygon points="820,700 845,190 870,700" fill="url(#tree-grad)" opacity="0.35"/>
+  <polygon points="900,700 920,310 940,700" fill="url(#tree-dark)" opacity="0.25"/>
+  <polygon points="960,700 985,250 1010,700" fill="url(#tree-grad)" opacity="0.3"/>
+  <polygon points="1040,700 1060,290 1080,700" fill="url(#tree-blue)" opacity="0.22"/>
+  <polygon points="1100,700 1125,170 1150,700" fill="url(#tree-dark)" opacity="0.32"/>
+
+  <circle cx="200" cy="100" r="40" fill="#CA8A04" opacity="0.04"/>
+  <rect x="0" y="0" width="1200" height="800" fill="url(#accent-glow)"/>
+</svg>

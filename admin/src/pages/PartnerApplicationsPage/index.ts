@@ -1,0 +1,1 @@
+export { PartnerApplicationsPage } from "./PartnerApplicationsPage";
