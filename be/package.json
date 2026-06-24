@@ -1,0 +1,40 @@
+{
+  "name": "eli-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../.env -- tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "dotenv -e ../.env -- node dist/index.js",
+    "db:generate": "dotenv -e ../.env -- prisma generate",
+    "db:migrate": "dotenv -e ../.env -- prisma migrate dev",
+    "db:push": "dotenv -e ../.env -- prisma db push",
+    "db:studio": "dotenv -e ../.env -- prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "minio": "^8.0.5",
+    "multer": "^2.0.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.15.30",
+    "@types/uuid": "^10.0.0",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^6.9.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

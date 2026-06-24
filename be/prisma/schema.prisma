@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+model Product {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal        @db.Decimal(10, 2)
+  quantity    Int            @default(0)
+  inStock     Boolean        @default(true)
+  isHit       Boolean        @default(false)
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  key       String
+  url       String
+  sortOrder Int     @default(0)
+}
+
+model Service {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  price        Decimal?      @db.Decimal(10, 2)
+  isActive     Boolean       @default(true)
+  applications Application[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Application {
+  id        String            @id @default(uuid())
+  name      String
+  contact   String
+  message   String?
+  serviceId String?
+  service   Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  status    ApplicationStatus @default(NEW)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  authorName  String
+  text        String
+  rating      Int      @default(5)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  status            OrderStatus @default(PENDING)
+  totalAmount       Decimal     @db.Decimal(10, 2)
+  paymentLink       String?
+  tochkaOperationId String?     @unique
+  paymentLinkId     String?     @unique
+  items             OrderItem[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+}
