@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { to: "/products", label: "Товары" },
+  { to: "/sale-points", label: "Точки продаж" },
   { to: "/services", label: "Услуги" },
   { to: "/feedback", label: "Обратная связь" },
   { to: "/applications", label: "Заявки" },

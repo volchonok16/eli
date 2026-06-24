@@ -29,10 +29,22 @@ model Product {
   quantity    Int            @default(0)
   inStock     Boolean        @default(true)
   isHit       Boolean        @default(false)
+  salePointId String?
+  salePoint   SalePoint?     @relation(fields: [salePointId], references: [id], onDelete: SetNull)
   images      ProductImage[]
   orderItems  OrderItem[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+}
+
+model SalePoint {
+  id        String    @id @default(uuid())
+  shortName String
+  address   String
+  imageKey  String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model ProductImage {

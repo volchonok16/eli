@@ -4,6 +4,8 @@ import { AdminLayout } from "./components/AdminLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { ProductFormPage } from "./pages/ProductFormPage";
+import { SalePointsPage } from "./pages/SalePointsPage";
+import { SalePointFormPage } from "./pages/SalePointFormPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ServiceFormPage } from "./pages/ServiceFormPage";
 import { FeedbackPage } from "./pages/FeedbackPage";
@@ -32,6 +34,9 @@ export function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/new" element={<ProductFormPage />} />
         <Route path="products/:id" element={<ProductFormPage />} />
+        <Route path="sale-points" element={<SalePointsPage />} />
+        <Route path="sale-points/new" element={<SalePointFormPage />} />
+        <Route path="sale-points/:id" element={<SalePointFormPage />} />
         <Route path="services" element={<ServicesPage />} />
         <Route path="services/new" element={<ServiceFormPage />} />
         <Route path="services/:id" element={<ServiceFormPage />} />

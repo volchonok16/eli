@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, type Product, type ProductImage } from "../api";
+import { api, type Product, type ProductImage, type SalePoint } from "../api";
 
 export function ProductFormPage() {
   const { id } = useParams();
@@ -13,10 +13,16 @@ export function ProductFormPage() {
   const [quantity, setQuantity] = useState("0");
   const [inStock, setInStock] = useState(true);
   const [isHit, setIsHit] = useState(false);
+  const [salePointId, setSalePointId] = useState("");
+  const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.getSalePoints().then(setSalePoints).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -29,6 +35,7 @@ export function ProductFormPage() {
         setQuantity(String(product.quantity));
         setInStock(product.inStock);
         setIsHit(product.isHit);
+        setSalePointId(product.salePointId ?? "");
         setImages(
           [...product.images].sort((a, b) => a.sortOrder - b.sortOrder)
         );
@@ -51,6 +58,7 @@ export function ProductFormPage() {
       quantity: parseInt(quantity, 10),
       inStock,
       isHit,
+      salePointId: salePointId || null,
     };
 
     try {
@@ -174,6 +182,22 @@ export function ProductFormPage() {
                 required
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="salePoint">Точка продаж</label>
+            <select
+              id="salePoint"
+              value={salePointId}
+              onChange={(e) => setSalePointId(e.target.value)}
+            >
+              <option value="">— Не выбрана —</option>
+              {salePoints.map((point) => (
+                <option key={point.id} value={point.id}>
+                  {point.shortName} — {point.address}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

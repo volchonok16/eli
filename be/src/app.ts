@@ -9,6 +9,7 @@ import { applicationsRouter } from "./routes/applications.js";
 import { reviewsRouter } from "./routes/reviews.js";
 import { ordersRouter } from "./routes/orders.js";
 import { webhooksRouter } from "./routes/webhooks.js";
+import { salePointsRouter } from "./routes/sale-points.js";
 import { filesRouter } from "./routes/files.js";
 
 export function createApp() {
@@ -32,6 +33,7 @@ export function createApp() {
   app.use("/api/feedback", feedbackRouter);
   app.use("/api/applications", applicationsRouter);
   app.use("/api/reviews", reviewsRouter);
+  app.use("/api/sale-points", salePointsRouter);
   app.use("/api/orders", ordersRouter);
   app.use("/api/webhooks", webhooksRouter);
   app.use("/api/files", filesRouter);

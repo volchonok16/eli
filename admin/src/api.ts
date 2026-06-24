@@ -19,6 +19,16 @@ export interface ProductImage {
   sortOrder: number;
 }
 
+export interface SalePoint {
+  id: string;
+  shortName: string;
+  address: string;
+  imageKey: string | null;
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -28,6 +38,13 @@ export interface Product {
   inStock: boolean;
   isHit: boolean;
   available: boolean;
+  salePointId: string | null;
+  salePoint: {
+    id: string;
+    shortName: string;
+    address: string;
+    imageUrl: string | null;
+  } | null;
   images: ProductImage[];
   createdAt: string;
   updatedAt: string;
@@ -145,6 +162,7 @@ export const api = {
     quantity: number;
     inStock: boolean;
     isHit: boolean;
+    salePointId?: string | null;
   }) =>
     request<Product>("/products", {
       method: "POST",
@@ -159,6 +177,7 @@ export const api = {
       quantity: number;
       inStock: boolean;
       isHit: boolean;
+      salePointId?: string | null;
     }
   ) =>
     request<Product>(`/products/${id}`, {
@@ -265,4 +284,32 @@ export const api = {
     request<Review>(`/reviews/${id}/publish`, { method: "PATCH" }),
   deleteReview: (id: string) =>
     request<void>(`/reviews/${id}`, { method: "DELETE" }),
+
+  getSalePoints: () => request<SalePoint[]>("/sale-points"),
+  getSalePoint: (id: string) => request<SalePoint>(`/sale-points/${id}`),
+  createSalePoint: (data: { shortName: string; address: string }) =>
+    request<SalePoint>("/sale-points", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateSalePoint: (
+    id: string,
+    data: { shortName: string; address: string }
+  ) =>
+    request<SalePoint>(`/sale-points/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  uploadSalePointImage: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return request<SalePoint>(`/sale-points/${id}/image`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+  deleteSalePointImage: (id: string) =>
+    request<void>(`/sale-points/${id}/image`, { method: "DELETE" }),
+  deleteSalePoint: (id: string) =>
+    request<void>(`/sale-points/${id}`, { method: "DELETE" }),
 };

@@ -51,6 +51,7 @@ export function ProductsPage() {
                 <th>Цена</th>
                 <th>Кол-во</th>
                 <th>Наличие</th>
+                <th>Точка</th>
                 <th>Хит</th>
                 <th></th>
               </tr>
@@ -81,6 +82,7 @@ export function ProductsPage() {
                       <span className="badge badge-danger">Нет в наличии</span>
                     )}
                   </td>
+                  <td>{product.salePoint?.shortName ?? "—"}</td>
                   <td>
                     {product.isHit ? (
                       <span className="badge badge-hit">Хит</span>

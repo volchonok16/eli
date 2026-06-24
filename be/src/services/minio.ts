@@ -33,13 +33,14 @@ export function getImagePublicUrl(key: string): string {
   return `${config.apiUrl}/api/files/${key}`;
 }
 
-export async function uploadProductImage(
-  file: Express.Multer.File
+export async function uploadImage(
+  file: Express.Multer.File,
+  folder: string
 ): Promise<{ key: string; url: string }> {
   await ensureBucket();
   const minio = getClient();
   const ext = file.originalname.split(".").pop() ?? "jpg";
-  const key = `products/${uuidv4()}.${ext}`;
+  const key = `${folder}/${uuidv4()}.${ext}`;
 
   await minio.putObject(config.minio.bucket, key, file.buffer, file.size, {
     "Content-Type": file.mimetype,
@@ -48,10 +49,20 @@ export async function uploadProductImage(
   return { key, url: getImagePublicUrl(key) };
 }
 
-export async function deleteProductImage(key: string): Promise<void> {
+export async function uploadProductImage(
+  file: Express.Multer.File
+): Promise<{ key: string; url: string }> {
+  return uploadImage(file, "products");
+}
+
+export async function deleteImage(key: string): Promise<void> {
   await ensureBucket();
   const minio = getClient();
   await minio.removeObject(config.minio.bucket, key);
+}
+
+export async function deleteProductImage(key: string): Promise<void> {
+  return deleteImage(key);
 }
 
 export async function getProductImage(key: string) {

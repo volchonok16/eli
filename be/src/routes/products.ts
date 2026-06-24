@@ -31,7 +31,23 @@ const productSchema = z.object({
   quantity: z.coerce.number().int().min(0),
   inStock: z.coerce.boolean().optional(),
   isHit: z.coerce.boolean().optional(),
+  salePointId: z.string().uuid().nullable().optional(),
 });
+
+function serializeSalePointRef(point: {
+  id: string;
+  shortName: string;
+  address: string;
+  imageKey: string | null;
+} | null) {
+  if (!point) return null;
+  return {
+    id: point.id,
+    shortName: point.shortName,
+    address: point.address,
+    imageUrl: point.imageKey ? getImagePublicUrl(point.imageKey) : null,
+  };
+}
 
 function serializeProduct(product: {
   id: string;
@@ -41,6 +57,13 @@ function serializeProduct(product: {
   quantity: number;
   inStock: boolean;
   isHit: boolean;
+  salePointId: string | null;
+  salePoint: {
+    id: string;
+    shortName: string;
+    address: string;
+    imageKey: string | null;
+  } | null;
   images: { id: string; key: string; url: string; sortOrder: number }[];
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +72,7 @@ function serializeProduct(product: {
     ...product,
     price: Number(product.price),
     available: product.inStock && product.quantity > 0,
+    salePoint: serializeSalePointRef(product.salePoint),
     images: product.images.map((img) => ({
       ...img,
       url: getImagePublicUrl(img.key),
@@ -58,7 +82,10 @@ function serializeProduct(product: {
 
 productsRouter.get("/", async (_req, res) => {
   const products = await prisma.product.findMany({
-    include: { images: { orderBy: { sortOrder: "asc" } } },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      salePoint: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   res.json(products.map(serializeProduct));
@@ -68,7 +95,10 @@ productsRouter.get("/:id", async (req, res) => {
   const id = paramId(req.params.id);
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { images: { orderBy: { sortOrder: "asc" } } },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      salePoint: true,
+    },
   });
 
   if (!product) {
@@ -86,7 +116,18 @@ productsRouter.post("/", authMiddleware, async (req, res) => {
     return;
   }
 
-  const { name, description, price, quantity, inStock, isHit } = parsed.data;
+  const { name, description, price, quantity, inStock, isHit, salePointId } =
+    parsed.data;
+
+  if (salePointId) {
+    const point = await prisma.salePoint.findUnique({
+      where: { id: salePointId },
+    });
+    if (!point) {
+      res.status(400).json({ error: "Точка продаж не найдена" });
+      return;
+    }
+  }
 
   const product = await prisma.product.create({
     data: {
@@ -96,8 +137,9 @@ productsRouter.post("/", authMiddleware, async (req, res) => {
       quantity,
       inStock: inStock ?? quantity > 0,
       isHit: isHit ?? false,
+      salePointId: salePointId ?? null,
     },
-    include: { images: true },
+    include: { images: true, salePoint: true },
   });
 
   res.status(201).json(serializeProduct(product));
@@ -120,7 +162,18 @@ productsRouter.put("/:id", authMiddleware, async (req, res) => {
     return;
   }
 
-  const { name, description, price, quantity, inStock, isHit } = parsed.data;
+  const { name, description, price, quantity, inStock, isHit, salePointId } =
+    parsed.data;
+
+  if (salePointId) {
+    const point = await prisma.salePoint.findUnique({
+      where: { id: salePointId },
+    });
+    if (!point) {
+      res.status(400).json({ error: "Точка продаж не найдена" });
+      return;
+    }
+  }
 
   const product = await prisma.product.update({
     where: { id },
@@ -131,8 +184,9 @@ productsRouter.put("/:id", authMiddleware, async (req, res) => {
       quantity,
       inStock: inStock ?? quantity > 0,
       isHit: isHit ?? false,
+      salePointId: salePointId ?? null,
     },
-    include: { images: { orderBy: { sortOrder: "asc" } } },
+    include: { images: { orderBy: { sortOrder: "asc" } }, salePoint: true },
   });
 
   res.json(serializeProduct(product));
