@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
-const cartItems = [
-  { id: 1, name: 'Ель Голубая (Picea pungens)', height: '2.0 м', price: 25000, quantity: 1, image: '/images/spruce-blue.svg' },
-  { id: 2, name: 'Ель Сербская (Picea omorika)', height: '2.5 м', price: 30000, quantity: 2, image: '/images/spruce-serbian.svg' },
-];
+import { useCart, useUpdateCartQuantity, useRemoveFromCart, useCheckout } from './useCart';
 
 const formatPrice = (v: number) => `${v.toLocaleString()} ₽`;
 
 export const CartPage = () => {
-  const isEmpty = cartItems.length === 0;
+  const { data: cart, isLoading } = useCart();
+  const updateQuantity = useUpdateCartQuantity();
+  const removeItem = useRemoveFromCart();
+  const checkout = useCheckout();
+
+  const items = cart?.items ?? [];
+  const total = cart?.total ?? 0;
+  const isEmpty = !isLoading && items.length === 0;
 
   if (isEmpty) {
     return (
@@ -26,8 +29,6 @@ export const CartPage = () => {
     );
   }
 
-  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
   return (
     <div className="min-h-screen bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -41,7 +42,7 @@ export const CartPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-6">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <div key={item.id} className="card p-6 flex gap-4 sm:gap-6">
                 <div className="w-24 h-24 bg-surface-dark flex items-center justify-center shrink-0 overflow-hidden">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
@@ -50,14 +51,37 @@ export const CartPage = () => {
                   <h3 className="font-serif text-lg text-primary">{item.name}</h3>
                   <p className="text-text-muted text-sm mb-2">Высота: {item.height}</p>
                   <div className="flex items-center gap-4 mt-3">
-                    <button className="w-8 h-8 border border-surface-muted flex items-center justify-center hover:bg-surface-dark transition-colors" aria-label="Уменьшить количество">-</button>
+                    <button
+                      className="w-8 h-8 border border-surface-muted flex items-center justify-center hover:bg-surface-dark transition-colors disabled:opacity-30"
+                      aria-label="Уменьшить количество"
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateQuantity.mutate({ itemId: item.id, quantity: item.quantity - 1 });
+                        }
+                      }}
+                      disabled={item.quantity <= 1}
+                    >
+                      -
+                    </button>
                     <span className="text-primary tabular-nums">{item.quantity}</span>
-                    <button className="w-8 h-8 border border-surface-muted flex items-center justify-center hover:bg-surface-dark transition-colors" aria-label="Увеличить количество">+</button>
+                    <button
+                      className="w-8 h-8 border border-surface-muted flex items-center justify-center hover:bg-surface-dark transition-colors"
+                      aria-label="Увеличить количество"
+                      onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-sans text-xl text-primary font-semibold">{formatPrice(item.price)}</p>
-                  <button className="text-sm text-text-muted mt-2 hover:text-error transition-colors">Удалить</button>
+                  <button
+                    className="text-sm text-text-muted mt-2 hover:text-error transition-colors disabled:opacity-30"
+                    onClick={() => removeItem.mutate(item.id)}
+                    disabled={removeItem.isPending}
+                  >
+                    {removeItem.isPending ? 'Удаление...' : 'Удалить'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -67,9 +91,9 @@ export const CartPage = () => {
             <div className="card p-6 sticky top-24">
               <h3 className="font-serif text-xl text-primary mb-6">Итого</h3>
               <div className="space-y-3 text-sm">
-                {cartItems.map((item) => (
+                {items.map((item) => (
                   <div key={item.id} className="flex justify-between text-text-muted">
-                    <span className="truncate mr-4">{item.name.split('(')[0]}</span>
+                    <span className="truncate mr-4">{item.name}</span>
                     <span className="shrink-0">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
@@ -79,7 +103,23 @@ export const CartPage = () => {
                 <span>Сумма</span>
                 <span>{formatPrice(total)}</span>
               </div>
-              <button className="btn-primary w-full text-center">Оформить заказ</button>
+              <button
+                className="btn-primary w-full text-center"
+                onClick={() => checkout.mutate()}
+                disabled={checkout.isPending}
+              >
+                {checkout.isPending ? 'Оформление...' : 'Оформить заказ'}
+              </button>
+              {checkout.isSuccess && (
+                <p className="text-sm text-accent mt-3 text-center">
+                  Заказ оформлен! Мы свяжемся с вами.
+                </p>
+              )}
+              {checkout.isError && (
+                <p className="text-sm text-error mt-3 text-center">
+                  Ошибка при оформлении. Попробуйте снова.
+                </p>
+              )}
             </div>
           </div>
         </div>

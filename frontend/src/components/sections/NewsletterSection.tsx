@@ -1,17 +1,33 @@
 import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
+import { useNewsletterSubscribe } from './useNewsletterSubscribe';
 
 export const NewsletterSection = () => {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success'>('idle');
+  const subscribe = useNewsletterSubscribe();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (email) {
-      setStatus('success');
-      setEmail('');
+      subscribe.mutate(email);
     }
   };
+
+  if (subscribe.isSuccess) {
+    return (
+      <section className="py-20 bg-surface border-y border-surface-muted">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.p
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-accent font-medium text-lg"
+          >
+            Спасибо! Вы подписаны на рассылку.
+          </motion.p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-surface border-y border-surface-muted">
@@ -27,30 +43,31 @@ export const NewsletterSection = () => {
             Сезонные новинки, советы по уходу и специальные предложения — без спама
           </p>
 
-          {status === 'success' ? (
-            <motion.p
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-accent font-medium text-lg"
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <label htmlFor="newsletter-email" className="sr-only">Email для рассылки</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Ваш email"
+              required
+              className="input-field flex-1"
+              disabled={subscribe.isPending}
+            />
+            <button
+              type="submit"
+              className="btn-primary whitespace-nowrap"
+              disabled={subscribe.isPending}
             >
-              Спасибо! Вы подписаны на рассылку.
-            </motion.p>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <label htmlFor="newsletter-email" className="sr-only">Email для рассылки</label>
-              <input
-                id="newsletter-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Ваш email"
-                required
-                className="input-field flex-1"
-              />
-              <button type="submit" className="btn-primary whitespace-nowrap">
-                Подписаться
-              </button>
-            </form>
+              {subscribe.isPending ? 'Отправка...' : 'Подписаться'}
+            </button>
+          </form>
+
+          {subscribe.isError && (
+            <p className="text-error text-sm mt-3">
+              Не удалось подписаться. Попробуйте позже.
+            </p>
           )}
         </motion.div>
       </div>

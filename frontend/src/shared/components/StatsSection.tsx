@@ -66,14 +66,25 @@ const AnimatedRing = ({ progress, size, strokeWidth, label, suffix, maxValue }: 
   );
 };
 
-const stats = [
+interface Stat {
+  value: number;
+  maxValue: number;
+  suffix: string;
+  label: string;
+}
+
+const defaultStats: Stat[] = [
   { value: 98, maxValue: 100, suffix: '%', label: 'Приживаемость' },
   { value: 15, maxValue: 15, suffix: '+', label: 'Лет опыта' },
   { value: 10000, maxValue: 10000, suffix: '+', label: 'Елей посажено' },
   { value: 500, maxValue: 500, suffix: '+', label: 'Довольных клиентов' },
 ];
 
-export const StatsSection = () => {
+interface StatsSectionProps {
+  items?: Stat[];
+}
+
+export const StatsSection = ({ items = defaultStats }: StatsSectionProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -88,7 +99,7 @@ export const StatsSection = () => {
 
   return (
     <div ref={containerRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 max-w-4xl mx-auto">
-      {stats.map((stat, index) => (
+      {items.map((stat, index) => (
         <AnimatedRing
           key={index}
           progress={inView ? stat.value : 0}

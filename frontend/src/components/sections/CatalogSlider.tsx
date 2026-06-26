@@ -2,7 +2,15 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-const slides = [
+interface Slide {
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  stats: string[];
+}
+
+const defaultSlides: Slide[] = [
   {
     title: 'Голубая ель',
     subtitle: 'Picea pungens',
@@ -26,7 +34,11 @@ const slides = [
   },
 ];
 
-export const StickyShowcase = () => {
+interface StickyShowcaseProps {
+  slides?: Slide[];
+}
+
+export const StickyShowcase = ({ slides = defaultSlides }: StickyShowcaseProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,

@@ -7,7 +7,7 @@ interface Testimonial {
   rating: number;
 }
 
-const testimonials: Testimonial[] = [
+const defaultTestimonials: Testimonial[] = [
   {
     text: 'Заказали три голубые ели для загородного дома. Доставили в идеальном состоянии, деревья прижились и радуют глаз каждый день. Сервис на высшем уровне.',
     author: 'Александр М.',
@@ -28,9 +28,13 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-export const Testimonials = () => (
+interface TestimonialProps {
+  items?: Testimonial[];
+}
+
+export const Testimonials = ({ items = defaultTestimonials }: TestimonialProps) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-    {testimonials.map((t, index) => (
+    {items.map((t, index) => (
       <motion.blockquote
         key={index}
         initial={{ opacity: 0, y: 30 }}

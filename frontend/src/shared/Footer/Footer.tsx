@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 export const Footer = () => (
   <footer className="bg-primary text-text-inverse">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12">
-        <div className="sm:col-span-2 md:col-span-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
+        <div>
           <h3 className="font-display text-xl font-bold italic mb-3 sm:mb-4">Eli</h3>
           <p className="text-text-inverse/70 text-sm leading-relaxed max-w-xs">
             Элитные ели с доставкой по всей стране. Качество, проверенное временем.
@@ -12,14 +12,19 @@ export const Footer = () => (
         </div>
 
         <div>
-          <h4 className="font-medium text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4 text-text-inverse/40">Навигация</h4>
+          <h4 className="font-medium text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4 text-text-inverse/40">Покупателям</h4>
           <nav className="flex flex-col gap-2 sm:gap-3">
-            <Link to="/catalog" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">
-              Каталог
-            </Link>
-            <Link to="/about" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">
-              О нас
-            </Link>
+            <Link to="/catalog" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">Каталог</Link>
+            <Link to="/wholesale" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">Ёлки оптом</Link>
+            <Link to="/bases" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">Ёлочные базары</Link>
+          </nav>
+        </div>
+
+        <div>
+          <h4 className="font-medium text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4 text-text-inverse/40">Компания</h4>
+          <nav className="flex flex-col gap-2 sm:gap-3">
+            <Link to="/about" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">О нас</Link>
+            <Link to="/partners" className="text-text-inverse/70 text-sm hover:text-accent transition-colors py-1">Сотрудничество</Link>
           </nav>
         </div>
 

@@ -41,46 +41,174 @@
 
 ```
 ели/
-├── .env.example            # Шаблон переменных окружения
-├── docker-compose.yml      # PostgreSQL + MinIO
-├── ARCHITECTURE.md         # Этот файл
-├── TODO.md                 # План-график задач
-├── DATA_MODEL.md           # Описание моделей и API
-├── be/                     # Бэкенд
+├── ARCHITECTURE.md           # Единый источник архитектурных правил
+├── TODO.md                   # План-график задач
+├── DATA_MODEL.md             # Описание моделей и API
+├── be/                       # Бэкенд
 │   ├── prisma/
-│   │   └── schema.prisma   # Схема БД — источник истины
+│   │   └── schema.prisma     # Схема БД — источник истины
 │   ├── src/
-│   │   ├── index.ts        # Точка входа
-│   │   ├── app.ts          # Express app factory
-│   │   ├── config.ts       # Конфигурация из .env
-│   │   ├── db/prisma.ts    # PrismaClient singleton
-│   │   ├── middleware/      # auth, rate-limit, cors
-│   │   ├── routes/          # Роутеры (одна сущность = один файл)
-│   │   ├── services/        # Бизнес-логика + внешние API
-│   │   └── utils/           # Вспомогательные функции
+│   │   ├── index.ts          # Точка входа
+│   │   ├── app.ts            # Express app factory
+│   │   ├── config.ts         # Конфигурация из .env
+│   │   ├── db/prisma.ts      # PrismaClient singleton
+│   │   ├── middleware/        # auth, rate-limit, cors
+│   │   ├── routes/            # Роутеры (одна сущность = один файл)
+│   │   ├── services/          # Бизнес-логика + внешние API
+│   │   └── utils/             # Вспомогательные функции
 │   └── package.json
-├── frontend/               # Витрина магазина
+├── frontend/                 # Витрина магазина
 │   └── src/
-│       ├── api/            # HTTP-клиент и interceptors
-│       ├── components/     # Переиспользуемые компоненты (sections/, shared/)
-│       ├── constants/      # Константы приложения
-│       ├── pages/          # Страницы (одна директория на страницу)
-│       ├── shared/         # Layout, хуки, общие компоненты
-│       └── types/          # TypeScript-типы (фронтенд-модели)
-└── admin/                  # Админ-панель
+│       ├── api/              # HTTP-клиент, interceptors, эндпоинты
+│       │   ├── client.ts     #    Axios-инстанс + токен-менеджмент
+│       │   ├── interceptors.ts
+│       │   ├── errorHandler.ts
+│       │   ├── endpoints/    #    Эндпоинты по сущностям (один файл = одна сущность)
+│       │   └── index.ts
+│       ├── components/       # Бизнес-компоненты (ProtectedRoute, секции)
+│       ├── constants/        # Константы приложения
+│       │   ├── app.ts
+│       │   └── images.ts
+│       ├── pages/            # Страницы (одна директория на страницу)
+│       ├── shared/           # Переиспользуемое между модулями
+│       │   ├── components/   #    Общие UI-компоненты (Card, ProductCard, SectionHeading)
+│       │   ├── contexts/     #    React контексты (AuthContext, CartContext)
+│       │   ├── hooks/        #    Общие хуки (useParallax, use3DTilt, useDebounce)
+│       │   ├── Header/       #    Шапка
+│       │   └── Footer/       #    Подвал
+│       └── types/            # TypeScript-типы (фронтенд-модели)
+└── admin/                    # Админ-панель
     └── src/
-        ├── api.ts          # HTTP-клиент с Bearer-токеном
-        ├── components/     # AdminLayout, общие компоненты
-        ├── context/        # AuthContext (токен + состояние входа)
-        └── pages/          # CRUD-страницы для каждой сущности
+        ├── api.ts            # HTTP-клиент с Bearer-токеном
+        ├── components/       # AdminLayout, общие компоненты
+        ├── context/          # AuthContext (токен + состояние входа)
+        └── pages/            # CRUD-страницы для каждой сущности
 ```
 
 ### Принципы организации кода
 
 - **Один роутер = одна сущность.** Все эндпоинты для `/api/products` лежат в `routes/products.ts`.
 - **Сервисный слой.** Внешние интеграции (Точка Банк, Telegram, MinIO) вынесены в `services/`.
-- **Фронтенд: одна страница = одна директория.** `pages/HomePage/` содержит `HomePage.tsx` и `index.ts` для чистого экспорта.
-- **Shared-компоненты лежат в `shared/`**, а не в `components/`. Это разделение на layout-обёртки и бизнес-компоненты.
+- **Фронтенд: одна страница = одна директория.** `pages/HomePage/` содержит `HomePage.tsx`, `hooks/`, `ui/` и `index.ts`.
+- **Shared-компоненты лежат в `shared/`.** UI-компоненты — `shared/components/`, хуки — `shared/hooks/`.
+- **Бизнес-компоненты — в `components/`.** ProtectedRoute, layout-обёртки.
+- **API-эндпоинты — в `api/endpoints/`.** Один файл на сущность: `endpoints/products.ts`, `endpoints/orders.ts` и т.д.
+- **Каждая директория с экспортами обязана иметь `index.ts`** с реэкспортом публичного API (barrel export).
+
+### Правила фронтенд-кода
+
+#### API-слой: эндпоинты в `api/endpoints/`
+
+Каждая сущность — отдельный файл с чистыми функциями-запросами (без состояния):
+
+```typescript
+// api/endpoints/products.ts
+import { apiClient } from '@/api/client';
+
+export const productsApi = {
+  getAll: (params?: ProductFilters) =>
+    apiClient.get<Product[]>('/products', { params }).then(r => r.data),
+
+  getById: (id: string) =>
+    apiClient.get<Product>(`/products/${id}`).then(r => r.data),
+
+  create: (data: CreateProductDto) =>
+    apiClient.post<Product>('/products', data).then(r => r.data),
+
+  remove: (id: string) =>
+    apiClient.delete(`/products/${id}`).then(r => r.data),
+};
+```
+
+#### ВСЕ запросы к серверу — только через хуки с TanStack Query
+
+**Прямые вызовы API из компонентов запрещены.** Каждый API-вызов оборачивается в хук, использующий `@tanstack/react-query`. Хук инкапсулирует `queryKey`, `queryFn`, `staleTime`, обработку ошибок.
+
+```typescript
+// ✅ Правильно — запрос через React Query в хуке
+// pages/ProductsPage/hooks/useProducts.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { productsApi } from '@/api/endpoints/products';
+
+export const useProducts = (params?: ProductFilters) =>
+  useQuery({
+    queryKey: ['products', params],
+    queryFn: () => productsApi.getAll(params),
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useDeleteProduct = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: productsApi.remove,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+  });
+};
+```
+
+```typescript
+// ❌ Неправильно — прямой вызов API в компоненте
+import { apiClient } from '@/api';
+const data = await apiClient.get('/products');
+```
+
+```typescript
+// ❌ Неправильно — ручное управление состоянием в хуке
+export function useProducts() {
+  const [data, setData] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { apiClient.get('/products').then(setData); }, []);
+  return { data, loading };
+}
+```
+
+#### Правила именования и структуры файлов
+
+| Категория | Правило | Пример |
+|---|---|---|
+| Компоненты | PascalCase | `ProductTable`, `AdminLayout` |
+| Хуки | camelCase, префикс `use` | `useProducts`, `useDebounce` |
+| Функции API | camelCase | `getProducts`, `createProduct` |
+| Типы/интерфейсы | PascalCase | `Product`, `OrderStatus` |
+| Файлы компонентов | PascalCase.tsx | `ProductTable.tsx` |
+| Файлы хуков/утилит | camelCase.ts | `useProducts.ts`, `formatDate.ts` |
+| Константы | UPPER_SNAKE_CASE | `API_BASE_URL` |
+| Булевы переменные | префикс `is`, `has`, `should` | `isLoading`, `hasError` |
+| Обработчики событий | префикс `handle` | `handleSubmit`, `handleDelete` |
+
+#### Ограничения на файлы
+
+- **Максимум 200 строк** на файл. При превышении — выносить подкомпоненты в `ui/`, логику в `hooks/`, хелперы в `utils/`.
+- **Один файл — один компонент / хук / функция.** Никаких «сборников» из нескольких экспортов в одном файле (кроме barrel `index.ts`).
+- **Только именованные экспорты.** Никаких `export default`.
+- **Все внутренние импорты — через алиас `@/`.** Никаких `../../../`.
+
+#### Страницы: структура директории
+
+```
+pages/ProductsPage/
+├── ProductsPage.tsx       # корневой компонент (композиция, layout)
+├── ProductFormPage.tsx    # форма создания/редактирования (если нужна)
+├── hooks/
+│   ├── useProducts.ts     # загрузка списка (React Query)
+│   └── useProductForm.ts  # логика формы (состояние, валидация, submit)
+├── ui/
+│   └── ProductTable.tsx   # презентационные компоненты
+└── index.ts               # barrel export
+```
+
+#### Чеклист при создании новой страницы
+
+- [ ] Директория `pages/NewPage/`
+- [ ] `NewPage.tsx` — корневой компонент
+- [ ] `hooks/useNewPage.ts` — логика через React Query
+- [ ] `ui/` — презентационные компоненты
+- [ ] `index.ts` — barrel export
+- [ ] Эндпоинты в `api/endpoints/new-entity.ts`
+- [ ] Ни один файл не превышает 200 строк
+- [ ] Все импорты через `@/`
+- [ ] Именованные экспорты
+- [ ] API-вызовы только через хуки с React Query
 
 ---
 
