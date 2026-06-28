@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { adminAuthMiddleware } from "../middleware/auth.js";
@@ -8,6 +9,7 @@ import {
   deleteProductImage,
   getImagePublicUrl,
 } from "../services/minio.js";
+import { serializeProduct } from "../utils/serializers.js";
 import { paramId } from "../utils/params.js";
 
 export const productsRouter = Router();
@@ -25,80 +27,138 @@ const upload = multer({
 });
 
 const productSchema = z.object({
+  sku: z.string().nullable().optional(),
   name: z.string().min(1, "Название обязательно"),
   description: z.string().optional(),
+  careGuide: z.string().optional(),
+  height: z.coerce.number().int().positive().nullable().optional(),
+  heightLabel: z.string().nullable().optional(),
+  sort: z.string().nullable().optional(),
   price: z.coerce.number().positive("Цена должна быть больше 0"),
+  costPrice: z.coerce.number().positive().nullable().optional(),
   quantity: z.coerce.number().int().min(0),
   inStock: z.coerce.boolean().optional(),
   isHit: z.coerce.boolean().optional(),
+  isNew: z.coerce.boolean().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
   salePointId: z.string().uuid().nullable().optional(),
 });
 
-function serializeSalePointRef(point: {
-  id: string;
-  shortName: string;
-  address: string;
-  imageKey: string | null;
-} | null) {
-  if (!point) return null;
-  return {
-    id: point.id,
-    shortName: point.shortName,
-    address: point.address,
-    imageUrl: point.imageKey ? getImagePublicUrl(point.imageKey) : null,
-  };
-}
+const productInclude = {
+  images: { orderBy: { sortOrder: "asc" as const } },
+  salePoint: true,
+  category: { select: { id: true, name: true } },
+};
 
-function serializeProduct(product: {
-  id: string;
-  name: string;
-  description: string | null;
-  price: { toString(): string };
-  quantity: number;
-  inStock: boolean;
-  isHit: boolean;
-  salePointId: string | null;
-  salePoint: {
-    id: string;
-    shortName: string;
-    address: string;
-    imageKey: string | null;
-  } | null;
-  images: { id: string; key: string; url: string; sortOrder: number }[];
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  return {
-    ...product,
-    price: Number(product.price),
-    available: product.inStock && product.quantity > 0,
-    salePoint: serializeSalePointRef(product.salePoint),
-    images: product.images.map((img) => ({
-      ...img,
-      url: getImagePublicUrl(img.key),
-    })),
-  };
-}
+productsRouter.get("/", async (req, res) => {
+  const where: Prisma.ProductWhereInput = {};
 
-productsRouter.get("/", async (_req, res) => {
-  const products = await prisma.product.findMany({
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      salePoint: true,
-    },
-    orderBy: { createdAt: "desc" },
+  if (req.query.categoryId) {
+    where.categoryId = String(req.query.categoryId);
+  }
+  if (req.query.salePointId) {
+    where.salePointId = String(req.query.salePointId);
+  }
+  if (req.query.inStock === "true") {
+    where.inStock = true;
+  }
+  if (req.query.heightMin) {
+    where.height = {
+      ...(where.height as object),
+      gte: Number(req.query.heightMin),
+    };
+  }
+  if (req.query.heightMax) {
+    where.height = {
+      ...(where.height as object),
+      lte: Number(req.query.heightMax),
+    };
+  }
+  if (req.query.priceMin || req.query.priceMax) {
+    where.price = {};
+    if (req.query.priceMin) {
+      (where.price as Prisma.DecimalFilter).gte = Number(req.query.priceMin);
+    }
+    if (req.query.priceMax) {
+      (where.price as Prisma.DecimalFilter).lte = Number(req.query.priceMax);
+    }
+  }
+  if (req.query.search) {
+    const search = String(req.query.search);
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const sort = String(req.query.sort ?? "newest");
+  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
+  if (sort === "price_asc") orderBy = { price: "asc" };
+  if (sort === "price_desc") orderBy = { price: "desc" };
+  if (sort === "popularity") orderBy = { isHit: "desc" };
+
+  if (!req.query.page && !req.query.limit) {
+    const products = await prisma.product.findMany({
+      where,
+      include: productInclude,
+      orderBy,
+    });
+    res.json(products.map(serializeProduct));
+    return;
+  }
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+  const skip = (page - 1) * limit;
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: productInclude,
+      orderBy,
+      skip,
+      take: limit,
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  res.json({
+    items: products.map(serializeProduct),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
   });
-  res.json(products.map(serializeProduct));
+});
+
+productsRouter.get("/:id/related", async (req, res) => {
+  const id = paramId(req.params.id);
+  const product = await prisma.product.findUnique({ where: { id } });
+  if (!product) {
+    res.status(404).json({ error: "Товар не найден" });
+    return;
+  }
+
+  const related = await prisma.product.findMany({
+    where: {
+      id: { not: id },
+      OR: [
+        { categoryId: product.categoryId ?? undefined },
+        { isHit: true },
+      ],
+    },
+    include: productInclude,
+    take: 4,
+  });
+
+  res.json(related.map(serializeProduct));
 });
 
 productsRouter.get("/:id", async (req, res) => {
   const id = paramId(req.params.id);
   const product = await prisma.product.findUnique({
     where: { id },
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      salePoint: true,
-    },
+    include: productInclude,
   });
 
   if (!product) {
@@ -116,12 +176,10 @@ productsRouter.post("/", adminAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const { name, description, price, quantity, inStock, isHit, salePointId } =
-    parsed.data;
-
-  if (salePointId) {
+  const data = parsed.data;
+  if (data.salePointId) {
     const point = await prisma.salePoint.findUnique({
-      where: { id: salePointId },
+      where: { id: data.salePointId },
     });
     if (!point) {
       res.status(400).json({ error: "Точка продаж не найдена" });
@@ -131,15 +189,23 @@ productsRouter.post("/", adminAuthMiddleware, async (req, res) => {
 
   const product = await prisma.product.create({
     data: {
-      name,
-      description,
-      price,
-      quantity,
-      inStock: inStock ?? quantity > 0,
-      isHit: isHit ?? false,
-      salePointId: salePointId ?? null,
+      sku: data.sku ?? null,
+      name: data.name,
+      description: data.description,
+      careGuide: data.careGuide,
+      height: data.height ?? null,
+      heightLabel: data.heightLabel ?? null,
+      sort: data.sort ?? null,
+      price: data.price,
+      costPrice: data.costPrice ?? null,
+      quantity: data.quantity,
+      inStock: data.inStock ?? data.quantity > 0,
+      isHit: data.isHit ?? false,
+      isNew: data.isNew ?? false,
+      categoryId: data.categoryId ?? null,
+      salePointId: data.salePointId ?? null,
     },
-    include: { images: true, salePoint: true },
+    include: productInclude,
   });
 
   res.status(201).json(serializeProduct(product));
@@ -153,40 +219,33 @@ productsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const existing = await prisma.product.findUnique({
-    where: { id },
-  });
-
+  const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) {
     res.status(404).json({ error: "Товар не найден" });
     return;
   }
 
-  const { name, description, price, quantity, inStock, isHit, salePointId } =
-    parsed.data;
-
-  if (salePointId) {
-    const point = await prisma.salePoint.findUnique({
-      where: { id: salePointId },
-    });
-    if (!point) {
-      res.status(400).json({ error: "Точка продаж не найдена" });
-      return;
-    }
-  }
-
+  const data = parsed.data;
   const product = await prisma.product.update({
     where: { id },
     data: {
-      name,
-      description,
-      price,
-      quantity,
-      inStock: inStock ?? quantity > 0,
-      isHit: isHit ?? false,
-      salePointId: salePointId ?? null,
+      sku: data.sku ?? null,
+      name: data.name,
+      description: data.description,
+      careGuide: data.careGuide,
+      height: data.height ?? null,
+      heightLabel: data.heightLabel ?? null,
+      sort: data.sort ?? null,
+      price: data.price,
+      costPrice: data.costPrice ?? null,
+      quantity: data.quantity,
+      inStock: data.inStock ?? data.quantity > 0,
+      isHit: data.isHit ?? false,
+      isNew: data.isNew ?? false,
+      categoryId: data.categoryId ?? null,
+      salePointId: data.salePointId ?? null,
     },
-    include: { images: { orderBy: { sortOrder: "asc" } }, salePoint: true },
+    include: productInclude,
   });
 
   res.json(serializeProduct(product));
@@ -218,10 +277,7 @@ productsRouter.post(
   upload.array("images", 10),
   async (req, res) => {
     const id = paramId(req.params.id);
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
-
+    const product = await prisma.product.findUnique({ where: { id } });
     if (!product) {
       res.status(404).json({ error: "Товар не найден" });
       return;
@@ -251,10 +307,12 @@ productsRouter.post(
       })
     );
 
-    res.status(201).json(images.map((img) => ({
-      ...img,
-      url: getImagePublicUrl(img.key),
-    })));
+    res.status(201).json(
+      images.map((img) => ({
+        ...img,
+        url: getImagePublicUrl(img.key),
+      }))
+    );
   }
 );
 
@@ -264,9 +322,7 @@ productsRouter.put(
   async (req, res) => {
     const id = paramId(req.params.id);
     const parsed = z
-      .object({
-        imageIds: z.array(z.string().uuid()).min(1),
-      })
+      .object({ imageIds: z.array(z.string().uuid()).min(1) })
       .safeParse(req.body);
 
     if (!parsed.success) {
@@ -302,11 +358,7 @@ productsRouter.put(
       )
     );
 
-    res.json(
-      images
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((img) => ({ ...img, url: getImagePublicUrl(img.key) }))
-    );
+    res.json(images);
   }
 );
 

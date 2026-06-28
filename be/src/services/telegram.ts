@@ -70,3 +70,47 @@ export async function notifyNewFeedback(feedback: {
 
   await sendTelegramMessage(text);
 }
+
+export async function notifyCancellation(
+  orderId: string,
+  reason: string
+): Promise<void> {
+  const text =
+    `<b>Заказ отменён</b>\n` +
+    `ID: <code>${orderId}</code>\n` +
+    `Причина: ${escapeHtml(reason)}`;
+
+  await sendTelegramMessage(text);
+}
+
+export async function notifyCpRequest(request: {
+  id: string;
+  companyName: string;
+  contactName: string;
+  phone: string;
+}): Promise<void> {
+  const text =
+    `<b>Запрос КП</b>\n` +
+    `ID: <code>${request.id}</code>\n` +
+    `Компания: ${escapeHtml(request.companyName)}\n` +
+    `Контакт: ${escapeHtml(request.contactName)}\n` +
+    `Телефон: ${escapeHtml(request.phone)}`;
+
+  await sendTelegramMessage(text);
+}
+
+export async function notifyPartnerApplication(app: {
+  id: string;
+  contactName: string;
+  phone: string;
+  landAddress: string;
+}): Promise<void> {
+  const text =
+    `<b>Заявка партнёра</b>\n` +
+    `ID: <code>${app.id}</code>\n` +
+    `Контакт: ${escapeHtml(app.contactName)}\n` +
+    `Телефон: ${escapeHtml(app.phone)}\n` +
+    `Адрес: ${escapeHtml(app.landAddress)}`;
+
+  await sendTelegramMessage(text);
+}

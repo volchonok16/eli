@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { UserRole } from "@prisma/client";
 import { z } from "zod";
 import { config } from "../config.js";
 import { prisma } from "../db/prisma.js";
@@ -33,34 +34,55 @@ const upload = multer({
 });
 
 const registerSchema = z.object({
-  phone: z.string().min(10, "Укажите номер телефона"),
+  email: z.string().email("Некорректный email"),
   password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
   name: z.string().min(1, "Укажите имя").max(100),
+  phone: z.string().optional(),
 });
 
-const userLoginSchema = z.object({
-  phone: z.string().min(10),
+const loginSchema = z.object({
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  username: z.string().optional(),
   password: z.string().min(1),
+});
+
+const profileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  phone: z.string().optional(),
+  password: z.string().min(6).optional(),
+  companyName: z.string().optional(),
+  inn: z.string().optional(),
 });
 
 function serializeUser(user: {
   id: string;
-  phone: string;
+  email: string;
   name: string;
+  phone: string | null;
   avatarKey: string | null;
+  role: UserRole;
+  wholesaleApproved: boolean;
+  companyName: string | null;
+  inn: string | null;
   createdAt: Date;
 }) {
   return {
     id: user.id,
-    phone: user.phone,
+    email: user.email,
     name: user.name,
+    phone: user.phone,
     avatarUrl: user.avatarKey ? getImagePublicUrl(user.avatarKey) : null,
+    role: user.role,
+    wholesaleApproved: user.wholesaleApproved,
+    companyName: user.companyName,
+    inn: user.inn,
     createdAt: user.createdAt,
   };
 }
 
-function signUserToken(userId: string): string {
-  return jwt.sign({ role: "user", userId }, config.jwt.secret, {
+function signUserToken(userId: string, role: UserRole): string {
+  return jwt.sign({ role, userId }, config.jwt.secret, {
     expiresIn: "24h",
   });
 }
@@ -75,15 +97,21 @@ authRouter.post(
       return;
     }
 
-    if (!isValidPhone(parsed.data.phone)) {
-      res.status(400).json({ error: "Некорректный номер телефона" });
-      return;
+    let phone: string | null = null;
+    if (parsed.data.phone) {
+      if (!isValidPhone(parsed.data.phone)) {
+        res.status(400).json({ error: "Некорректный номер телефона" });
+        return;
+      }
+      phone = normalizePhone(parsed.data.phone);
     }
 
-    const phone = normalizePhone(parsed.data.phone);
-    const existing = await prisma.user.findUnique({ where: { phone } });
+    const email = parsed.data.email.toLowerCase();
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] },
+    });
     if (existing) {
-      res.status(409).json({ error: "Пользователь с таким телефоном уже существует" });
+      res.status(409).json({ error: "Пользователь уже существует" });
       return;
     }
 
@@ -98,14 +126,16 @@ authRouter.post(
     try {
       const user = await prisma.user.create({
         data: {
-          phone,
+          email,
           passwordHash,
           name: parsed.data.name.trim(),
+          phone,
           avatarKey,
+          role: UserRole.CUSTOMER,
         },
       });
 
-      const token = signUserToken(user.id);
+      const token = signUserToken(user.id, user.role);
       res.status(201).json({
         token,
         user: serializeUser(user),
@@ -120,69 +150,73 @@ authRouter.post(
 );
 
 authRouter.post("/login", async (req, res) => {
-  const { username, password, phone } = req.body as {
-    username?: string;
-    password?: string;
-    phone?: string;
-  };
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
 
-  if (!password) {
-    res.status(400).json({ error: "Укажите пароль" });
+  const { email, phone, username, password } = parsed.data;
+
+  if (username) {
+    if (
+      username !== config.admin.username ||
+      password !== config.admin.password
+    ) {
+      res.status(401).json({ error: "Неверный логин или пароль" });
+      return;
+    }
+
+    const token = jwt.sign({ role: "ADMIN", source: "env" }, config.jwt.secret, {
+      expiresIn: "24h",
+    });
+    res.json({ token, role: "ADMIN" });
+    return;
+  }
+
+  if (email) {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      res.status(401).json({ error: "Неверный email или пароль" });
+      return;
+    }
+
+    const token = signUserToken(user.id, user.role);
+    res.json({ token, user: serializeUser(user) });
     return;
   }
 
   if (phone) {
-    const parsed = userLoginSchema.safeParse({ phone, password });
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() });
-      return;
-    }
-
-    if (!isValidPhone(parsed.data.phone)) {
+    if (!isValidPhone(phone)) {
       res.status(400).json({ error: "Некорректный номер телефона" });
       return;
     }
 
-    const normalizedPhone = normalizePhone(parsed.data.phone);
     const user = await prisma.user.findUnique({
-      where: { phone: normalizedPhone },
+      where: { phone: normalizePhone(phone) },
     });
-
-    if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       res.status(401).json({ error: "Неверный телефон или пароль" });
       return;
     }
 
-    const token = signUserToken(user.id);
-    res.json({
-      token,
-      user: serializeUser(user),
-    });
+    const token = signUserToken(user.id, user.role);
+    res.json({ token, user: serializeUser(user) });
     return;
   }
 
-  if (
-    username !== config.admin.username ||
-    password !== config.admin.password
-  ) {
-    res.status(401).json({ error: "Неверный логин или пароль" });
-    return;
-  }
-
-  const token = jwt.sign({ role: "admin" }, config.jwt.secret, {
-    expiresIn: "24h",
-  });
-
-  res.json({ token, role: "admin" });
+  res.status(400).json({ error: "Укажите email, телефон или username" });
 });
 
 authRouter.get("/me", authMiddleware, async (req: AuthRequest, res) => {
-  if (req.auth?.role === "admin") {
-    res.json({ role: "admin" });
+  if (req.auth && "source" in req.auth) {
+    res.json({ role: "ADMIN" });
     return;
   }
 
-  if (req.auth?.role === "user") {
+  if (req.auth && "userId" in req.auth) {
     const user = await prisma.user.findUnique({
       where: { id: req.auth.userId },
     });
@@ -193,7 +227,7 @@ authRouter.get("/me", authMiddleware, async (req: AuthRequest, res) => {
     }
 
     res.json({
-      role: "user",
+      role: user.role,
       user: serializeUser(user),
     });
     return;
@@ -202,17 +236,12 @@ authRouter.get("/me", authMiddleware, async (req: AuthRequest, res) => {
   res.status(401).json({ error: "Недействительный токен" });
 });
 
-authRouter.patch(
-  "/profile",
+authRouter.put(
+  "/me",
   userAuthMiddleware,
   upload.single("avatar"),
   async (req: AuthRequest, res) => {
     const userId = getUserId(req);
-    const profileSchema = z.object({
-      name: z.string().min(1).max(100).optional(),
-      password: z.string().min(6).optional(),
-    });
-
     const parsed = profileSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.flatten() });
@@ -234,25 +263,30 @@ authRouter.patch(
       }
     }
 
-    const data: {
-      name?: string;
-      passwordHash?: string;
-      avatarKey?: string | null;
-    } = {};
-
-    if (parsed.data.name) {
-      data.name = parsed.data.name.trim();
-    }
-    if (parsed.data.password) {
-      data.passwordHash = await bcrypt.hash(parsed.data.password, 10);
-    }
-    if (req.file) {
-      data.avatarKey = avatarKey;
+    let phone = user.phone;
+    if (parsed.data.phone !== undefined) {
+      if (parsed.data.phone === "") {
+        phone = null;
+      } else if (!isValidPhone(parsed.data.phone)) {
+        res.status(400).json({ error: "Некорректный номер телефона" });
+        return;
+      } else {
+        phone = normalizePhone(parsed.data.phone);
+      }
     }
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data,
+      data: {
+        name: parsed.data.name?.trim() ?? user.name,
+        phone,
+        companyName: parsed.data.companyName ?? user.companyName,
+        inn: parsed.data.inn ?? user.inn,
+        avatarKey: req.file ? avatarKey : user.avatarKey,
+        passwordHash: parsed.data.password
+          ? await bcrypt.hash(parsed.data.password, 10)
+          : undefined,
+      },
     });
 
     res.json({ user: serializeUser(updated) });

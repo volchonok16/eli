@@ -48,7 +48,7 @@ cartRouter.post("/items", async (req: AuthRequest, res) => {
     return;
   }
 
-  if (!product.inStock || product.quantity < 1) {
+  if (!product.inStock || product.quantity - product.reserved < 1) {
     res.status(400).json({ error: `Товар «${product.name}» недоступен` });
     return;
   }
@@ -59,9 +59,10 @@ cartRouter.post("/items", async (req: AuthRequest, res) => {
   );
   const newQuantity = (existingItem?.quantity ?? 0) + parsed.data.quantity;
 
-  if (newQuantity > product.quantity) {
+  if (newQuantity > product.quantity - product.reserved) {
+    const available = product.quantity - product.reserved;
     res.status(400).json({
-      error: `Доступно только ${product.quantity} шт. товара «${product.name}»`,
+      error: `Доступно только ${available} шт. товара «${product.name}»`,
     });
     return;
   }
@@ -102,9 +103,10 @@ cartRouter.put("/items/:productId", async (req: AuthRequest, res) => {
     return;
   }
 
-  if (!item.product.inStock || item.product.quantity < parsed.data.quantity) {
+  if (!item.product.inStock || item.product.quantity - item.product.reserved < parsed.data.quantity) {
+    const available = item.product.quantity - item.product.reserved;
     res.status(400).json({
-      error: `Доступно только ${item.product.quantity} шт. товара «${item.product.name}»`,
+      error: `Доступно только ${available} шт. товара «${item.product.name}»`,
     });
     return;
   }

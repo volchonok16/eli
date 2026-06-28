@@ -61,6 +61,18 @@ export async function uploadUserAvatar(
   return uploadImage(file, "avatars");
 }
 
+export async function uploadBannerImage(
+  file: Express.Multer.File
+): Promise<{ key: string; url: string }> {
+  return uploadImage(file, "banners");
+}
+
+export async function uploadPartnerDocument(
+  file: Express.Multer.File
+): Promise<{ key: string; url: string }> {
+  return uploadImage(file, "partners");
+}
+
 export async function deleteImage(key: string): Promise<void> {
   await ensureBucket();
   const minio = getClient();

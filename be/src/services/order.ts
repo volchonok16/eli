@@ -8,7 +8,7 @@ export async function completeOrderPayment(orderId: string): Promise<void> {
     include: { items: { include: { product: true } } },
   });
 
-  if (!order || order.status === "PAID") {
+  if (!order || order.status === "PAID" || order.status === "COMPLETED") {
     return;
   }
 
@@ -16,13 +16,16 @@ export async function completeOrderPayment(orderId: string): Promise<void> {
     for (const item of order.items) {
       const updated = await tx.product.update({
         where: { id: item.productId },
-        data: { quantity: { decrement: item.quantity } },
+        data: {
+          quantity: { decrement: item.quantity },
+          reserved: { decrement: item.quantity },
+        },
       });
 
       if (updated.quantity <= 0) {
         await tx.product.update({
           where: { id: item.productId },
-          data: { inStock: false, quantity: 0 },
+          data: { inStock: false, quantity: 0, reserved: 0 },
         });
       }
     }

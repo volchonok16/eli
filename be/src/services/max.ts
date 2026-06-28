@@ -64,3 +64,43 @@ export async function notifyNewFeedbackMax(feedback: {
 
   await sendMaxMessage(text);
 }
+
+export async function notifyCancellationMax(
+  orderId: string,
+  reason: string
+): Promise<void> {
+  const text = `Заказ отменён\nID: ${orderId}\nПричина: ${reason}`;
+  await sendMaxMessage(text);
+}
+
+export async function notifyCpRequestMax(request: {
+  id: string;
+  companyName: string;
+  contactName: string;
+  phone: string;
+}): Promise<void> {
+  const text =
+    `Запрос КП\n` +
+    `ID: ${request.id}\n` +
+    `Компания: ${request.companyName}\n` +
+    `Контакт: ${request.contactName}\n` +
+    `Телефон: ${request.phone}`;
+
+  await sendMaxMessage(text);
+}
+
+export async function notifyPartnerApplicationMax(app: {
+  id: string;
+  contactName: string;
+  phone: string;
+  landAddress: string;
+}): Promise<void> {
+  const text =
+    `Заявка партнёра\n` +
+    `ID: ${app.id}\n` +
+    `Контакт: ${app.contactName}\n` +
+    `Телефон: ${app.phone}\n` +
+    `Адрес: ${app.landAddress}`;
+
+  await sendMaxMessage(text);
+}
