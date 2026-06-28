@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
 import { paramId } from "../utils/params.js";
 
 export const reviewsRouter = Router();
@@ -21,14 +21,14 @@ reviewsRouter.get("/published", async (_req, res) => {
   res.json(reviews);
 });
 
-reviewsRouter.get("/", authMiddleware, async (_req, res) => {
+reviewsRouter.get("/", adminAuthMiddleware, async (_req, res) => {
   const reviews = await prisma.review.findMany({
     orderBy: { createdAt: "desc" },
   });
   res.json(reviews);
 });
 
-reviewsRouter.get("/:id", authMiddleware, async (req, res) => {
+reviewsRouter.get("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const review = await prisma.review.findUnique({ where: { id } });
   if (!review) {
@@ -38,7 +38,7 @@ reviewsRouter.get("/:id", authMiddleware, async (req, res) => {
   res.json(review);
 });
 
-reviewsRouter.post("/", authMiddleware, async (req, res) => {
+reviewsRouter.post("/", adminAuthMiddleware, async (req, res) => {
   const parsed = reviewSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -57,7 +57,7 @@ reviewsRouter.post("/", authMiddleware, async (req, res) => {
   res.status(201).json(review);
 });
 
-reviewsRouter.put("/:id", authMiddleware, async (req, res) => {
+reviewsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = reviewSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -84,7 +84,7 @@ reviewsRouter.put("/:id", authMiddleware, async (req, res) => {
   res.json(review);
 });
 
-reviewsRouter.patch("/:id/publish", authMiddleware, async (req, res) => {
+reviewsRouter.patch("/:id/publish", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {
@@ -99,7 +99,7 @@ reviewsRouter.patch("/:id/publish", authMiddleware, async (req, res) => {
   res.json(review);
 });
 
-reviewsRouter.delete("/:id", authMiddleware, async (req, res) => {
+reviewsRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing) {

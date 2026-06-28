@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
 import {
   uploadImage,
   deleteImage,
@@ -60,7 +60,7 @@ salePointsRouter.get("/:id", async (req, res) => {
   res.json(serializeSalePoint(point));
 });
 
-salePointsRouter.post("/", authMiddleware, async (req, res) => {
+salePointsRouter.post("/", adminAuthMiddleware, async (req, res) => {
   const parsed = salePointSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -71,7 +71,7 @@ salePointsRouter.post("/", authMiddleware, async (req, res) => {
   res.status(201).json(serializeSalePoint(point));
 });
 
-salePointsRouter.put("/:id", authMiddleware, async (req, res) => {
+salePointsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = salePointSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -94,7 +94,7 @@ salePointsRouter.put("/:id", authMiddleware, async (req, res) => {
 
 salePointsRouter.post(
   "/:id/image",
-  authMiddleware,
+  adminAuthMiddleware,
   upload.single("image"),
   async (req, res) => {
     const id = paramId(req.params.id);
@@ -124,7 +124,7 @@ salePointsRouter.post(
   }
 );
 
-salePointsRouter.delete("/:id/image", authMiddleware, async (req, res) => {
+salePointsRouter.delete("/:id/image", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const point = await prisma.salePoint.findUnique({ where: { id } });
   if (!point) {
@@ -143,7 +143,7 @@ salePointsRouter.delete("/:id/image", authMiddleware, async (req, res) => {
   res.status(204).send();
 });
 
-salePointsRouter.delete("/:id", authMiddleware, async (req, res) => {
+salePointsRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const point = await prisma.salePoint.findUnique({ where: { id } });
   if (!point) {

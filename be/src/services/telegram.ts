@@ -1,5 +1,12 @@
 import { config } from "../config.js";
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export async function sendTelegramMessage(text: string): Promise<void> {
   if (!config.telegram.botToken || !config.telegram.chatId) {
     return;
@@ -44,6 +51,22 @@ export async function notifyOrderPaid(
     `<b>Заказ оплачен</b>\n` +
     `ID: <code>${orderId}</code>\n` +
     `Сумма: ${totalAmount.toFixed(2)} ₽`;
+
+  await sendTelegramMessage(text);
+}
+
+export async function notifyNewFeedback(feedback: {
+  id: string;
+  name: string;
+  contact: string;
+  message: string;
+}): Promise<void> {
+  const text =
+    `<b>Новое обращение</b>\n` +
+    `ID: <code>${feedback.id}</code>\n` +
+    `Имя: ${escapeHtml(feedback.name)}\n` +
+    `Контакт: ${escapeHtml(feedback.contact)}\n\n` +
+    escapeHtml(feedback.message);
 
   await sendTelegramMessage(text);
 }

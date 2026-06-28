@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
 import {
   uploadProductImage,
   deleteProductImage,
@@ -109,7 +109,7 @@ productsRouter.get("/:id", async (req, res) => {
   res.json(serializeProduct(product));
 });
 
-productsRouter.post("/", authMiddleware, async (req, res) => {
+productsRouter.post("/", adminAuthMiddleware, async (req, res) => {
   const parsed = productSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -145,7 +145,7 @@ productsRouter.post("/", authMiddleware, async (req, res) => {
   res.status(201).json(serializeProduct(product));
 });
 
-productsRouter.put("/:id", authMiddleware, async (req, res) => {
+productsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = productSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -192,7 +192,7 @@ productsRouter.put("/:id", authMiddleware, async (req, res) => {
   res.json(serializeProduct(product));
 });
 
-productsRouter.delete("/:id", authMiddleware, async (req, res) => {
+productsRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const product = await prisma.product.findUnique({
     where: { id },
@@ -214,7 +214,7 @@ productsRouter.delete("/:id", authMiddleware, async (req, res) => {
 
 productsRouter.post(
   "/:id/images",
-  authMiddleware,
+  adminAuthMiddleware,
   upload.array("images", 10),
   async (req, res) => {
     const id = paramId(req.params.id);
@@ -260,7 +260,7 @@ productsRouter.post(
 
 productsRouter.put(
   "/:id/images/order",
-  authMiddleware,
+  adminAuthMiddleware,
   async (req, res) => {
     const id = paramId(req.params.id);
     const parsed = z
@@ -312,7 +312,7 @@ productsRouter.put(
 
 productsRouter.delete(
   "/:id/images/:imageId",
-  authMiddleware,
+  adminAuthMiddleware,
   async (req, res) => {
     const id = paramId(req.params.id);
     const imageId = paramId(req.params.imageId);

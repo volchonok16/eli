@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
+import { notifyNewFeedbackMax } from "../services/max.js";
+import { notifyNewFeedback } from "../services/telegram.js";
 import { paramId } from "../utils/params.js";
-
 export const feedbackRouter = Router();
 
 const createFeedbackSchema = z.object({
@@ -24,17 +25,22 @@ feedbackRouter.post("/", async (req, res) => {
   }
 
   const feedback = await prisma.feedback.create({ data: parsed.data });
-  res.status(201).json(feedback);
-});
 
-feedbackRouter.get("/", authMiddleware, async (_req, res) => {
+  await Promise.all([
+    notifyNewFeedback(feedback),
+    notifyNewFeedbackMax(feedback),
+  ]);
+
+  res.status(201).json(feedback);});
+
+feedbackRouter.get("/", adminAuthMiddleware, async (_req, res) => {
   const items = await prisma.feedback.findMany({
     orderBy: { createdAt: "desc" },
   });
   res.json(items);
 });
 
-feedbackRouter.patch("/:id", authMiddleware, async (req, res) => {
+feedbackRouter.patch("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = updateFeedbackSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -55,7 +61,7 @@ feedbackRouter.patch("/:id", authMiddleware, async (req, res) => {
   res.json(feedback);
 });
 
-feedbackRouter.delete("/:id", authMiddleware, async (req, res) => {
+feedbackRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const existing = await prisma.feedback.findUnique({ where: { id } });
   if (!existing) {

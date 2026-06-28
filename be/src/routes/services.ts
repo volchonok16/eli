@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
 import { paramId } from "../utils/params.js";
 
 export const servicesRouter = Router();
@@ -53,7 +53,7 @@ servicesRouter.get("/:id", async (req, res) => {
   res.json(serializeService(service));
 });
 
-servicesRouter.post("/", authMiddleware, async (req, res) => {
+servicesRouter.post("/", adminAuthMiddleware, async (req, res) => {
   const parsed = serviceSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -67,7 +67,7 @@ servicesRouter.post("/", authMiddleware, async (req, res) => {
   res.status(201).json(serializeService(service));
 });
 
-servicesRouter.put("/:id", authMiddleware, async (req, res) => {
+servicesRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = serviceSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -89,7 +89,7 @@ servicesRouter.put("/:id", authMiddleware, async (req, res) => {
   res.json(serializeService(service));
 });
 
-servicesRouter.delete("/:id", authMiddleware, async (req, res) => {
+servicesRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const existing = await prisma.service.findUnique({ where: { id } });
   if (!existing) {

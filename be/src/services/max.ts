@@ -48,3 +48,19 @@ export async function notifyOrderPaidMax(
   const text = `Заказ оплачен\nID: ${orderId}\nСумма: ${totalAmount.toFixed(2)} ₽`;
   await sendMaxMessage(text);
 }
+
+export async function notifyNewFeedbackMax(feedback: {
+  id: string;
+  name: string;
+  contact: string;
+  message: string;
+}): Promise<void> {
+  const text =
+    `Новое обращение\n` +
+    `ID: ${feedback.id}\n` +
+    `Имя: ${feedback.name}\n` +
+    `Контакт: ${feedback.contact}\n\n` +
+    feedback.message;
+
+  await sendMaxMessage(text);
+}

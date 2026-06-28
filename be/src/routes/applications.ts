@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { adminAuthMiddleware } from "../middleware/auth.js";
 import { paramId } from "../utils/params.js";
 
 export const applicationsRouter = Router();
@@ -54,7 +54,7 @@ applicationsRouter.post("/", async (req, res) => {
   });
 });
 
-applicationsRouter.get("/", authMiddleware, async (_req, res) => {
+applicationsRouter.get("/", adminAuthMiddleware, async (_req, res) => {
   const items = await prisma.application.findMany({
     include: { service: true },
     orderBy: { createdAt: "desc" },
@@ -71,7 +71,7 @@ applicationsRouter.get("/", authMiddleware, async (_req, res) => {
   );
 });
 
-applicationsRouter.patch("/:id", authMiddleware, async (req, res) => {
+applicationsRouter.patch("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = updateApplicationSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -100,7 +100,7 @@ applicationsRouter.patch("/:id", authMiddleware, async (req, res) => {
   });
 });
 
-applicationsRouter.delete("/:id", authMiddleware, async (req, res) => {
+applicationsRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const existing = await prisma.application.findUnique({ where: { id } });
   if (!existing) {

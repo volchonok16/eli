@@ -6,7 +6,13 @@ import { tochkaService } from "../services/tochka.js";
 import { notifyNewOrder } from "../services/telegram.js";
 import { notifyNewOrderMax } from "../services/max.js";
 import { paramId } from "../utils/params.js";
-import { authMiddleware } from "../middleware/auth.js";
+import {
+  adminAuthMiddleware,
+  AuthRequest,
+  getUserId,
+  optionalUserAuthMiddleware,
+  userAuthMiddleware,
+} from "../middleware/auth.js";
 import { getImagePublicUrl } from "../services/minio.js";
 
 export const ordersRouter = Router();
@@ -22,7 +28,7 @@ const createOrderSchema = z.object({
     .min(1, "Корзина пуста"),
 });
 
-ordersRouter.post("/", async (req, res) => {
+ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res) => {
   const parsed = createOrderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -63,11 +69,13 @@ ordersRouter.post("/", async (req, res) => {
   }
 
   const paymentLinkId = uuidv4();
+  const userId = req.auth?.role === "user" ? req.auth.userId : null;
 
   const order = await prisma.order.create({
     data: {
       totalAmount,
       paymentLinkId,
+      userId,
       items: {
         create: orderItems,
       },
@@ -127,7 +135,35 @@ const statusLabels: Record<string, string> = {
   CANCELLED: "Отменён",
 };
 
-ordersRouter.get("/history", authMiddleware, async (_req, res) => {
+ordersRouter.get("/my", userAuthMiddleware, async (req: AuthRequest, res) => {
+  const userId = getUserId(req);
+  const orders = await prisma.order.findMany({
+    where: { userId },
+    include: {
+      items: { include: { product: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  res.json(
+    orders.map((order) => ({
+      id: order.id,
+      status: order.status,
+      statusLabel: statusLabels[order.status],
+      totalAmount: Number(order.totalAmount),
+      createdAt: order.createdAt,
+      items: order.items.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: Number(item.price),
+        productName: item.product.name,
+        subtotal: Number(item.price) * item.quantity,
+      })),
+    }))
+  );
+});
+
+ordersRouter.get("/history", adminAuthMiddleware, async (_req, res) => {
   const orders = await prisma.order.findMany({
     include: {
       items: { include: { product: true } },

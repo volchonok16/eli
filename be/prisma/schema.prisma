@@ -21,6 +21,38 @@ enum ApplicationStatus {
   CANCELLED
 }
 
+model User {
+  id           String   @id @default(uuid())
+  phone        String   @unique
+  passwordHash String
+  name         String
+  avatarKey    String?
+  cart         Cart?
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+
+  @@unique([cartId, productId])
+}
+
 model Product {
   id          String         @id @default(uuid())
   name        String
@@ -33,6 +65,7 @@ model Product {
   salePoint   SalePoint?     @relation(fields: [salePointId], references: [id], onDelete: SetNull)
   images      ProductImage[]
   orderItems  OrderItem[]
+  cartItems   CartItem[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 }
@@ -100,6 +133,8 @@ model Review {
 
 model Order {
   id                String      @id @default(uuid())
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   status            OrderStatus @default(PENDING)
   totalAmount       Decimal     @db.Decimal(10, 2)
   paymentLink       String?
