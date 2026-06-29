@@ -26,6 +26,33 @@ compose() {
   sudo_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" "$@"
 }
 
+free_web_ports() {
+  echo "=== Освобождение портов 80/443 ==="
+  for svc in nginx apache2 caddy; do
+    if sudo_cmd systemctl is-active --quiet "${svc}" 2>/dev/null; then
+      echo "Останавливаем системный ${svc}..."
+      sudo_cmd systemctl stop "${svc}"
+      sudo_cmd systemctl disable "${svc}" 2>/dev/null || true
+    fi
+  done
+
+  local ids
+  ids=$(sudo_cmd sh -c 'docker ps -q --filter publish=80; docker ps -q --filter publish=443' | sort -u || true)
+  if [ -n "${ids}" ]; then
+    echo "Останавливаем Docker-контейнеры на 80/443..."
+    # shellcheck disable=SC2086
+    sudo_cmd docker stop ${ids}
+  fi
+
+  if sudo_cmd ss -tlnH sport = :80 2>/dev/null | grep -q .; then
+    echo "ERROR: порт 80 занят другим процессом:" >&2
+    sudo_cmd ss -tlnp sport = :80 || true
+    exit 1
+  fi
+}
+
+free_web_ports
+
 echo "=== Docker Compose: поднятие сервисов ==="
 compose up -d --build --remove-orphans
 
