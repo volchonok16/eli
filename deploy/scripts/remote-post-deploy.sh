@@ -2,6 +2,7 @@
 set -euo pipefail
 
 COMPOSE_FILE="/var/www/infra/docker-compose.prod.yml"
+ENV_FILE="/var/www/be/.env"
 SUDO_PASS="${SSH_SUDO_PASS:?SSH_SUDO_PASS is required}"
 
 trap 'echo "Post-deploy failed at line ${LINENO}" >&2' ERR
@@ -21,11 +22,15 @@ if ! sudo_cmd docker compose version; then
   exit 1
 fi
 
+compose() {
+  sudo_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" "$@"
+}
+
 echo "=== Docker Compose: поднятие сервисов ==="
-sudo_cmd docker compose -f "${COMPOSE_FILE}" up -d --build --remove-orphans
+compose up -d --build --remove-orphans
 
 echo "=== Certbot: выпуск/проверка сертификатов ==="
-if sudo_cmd docker compose -f "${COMPOSE_FILE}" run --rm --entrypoint test certbot \
+if compose run --rm --entrypoint test certbot \
   -f /etc/letsencrypt/live/xn--e1aaincbri4a7g.xn--p1ai/fullchain.pem 2>/dev/null; then
   sudo_cmd bash /var/www/infra/scripts/certbot-expand.sh
   sudo_cmd bash /var/www/infra/scripts/certbot-renew.sh

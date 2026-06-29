@@ -2,19 +2,20 @@
 set -euo pipefail
 
 COMPOSE_FILE="/var/www/infra/docker-compose.prod.yml"
+ENV_FILE="/var/www/be/.env"
 # shellcheck source=domains.sh
 source /var/www/infra/scripts/domains.sh
 
 EMAIL="${CERTBOT_EMAIL:-admin@xn--e1aaincbri4a7g.xn--p1ai}"
 
-if docker compose -f "${COMPOSE_FILE}" run --rm --entrypoint test certbot \
+if docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm --entrypoint test certbot \
   -f "${CERT_DIR}/fullchain.pem" 2>/dev/null; then
   echo "Сертификаты уже выпущены, пропускаем certbot-init"
   exit 0
 fi
 
 echo "Запуск nginx (HTTP) для ACME challenge..."
-docker compose -f "${COMPOSE_FILE}" up -d nginx
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d nginx
 
 DOMAIN_ARGS=()
 for domain in "${DOMAINS[@]}"; do
@@ -22,7 +23,7 @@ for domain in "${DOMAINS[@]}"; do
 done
 
 echo "Выпуск сертификатов Let's Encrypt..."
-docker compose -f "${COMPOSE_FILE}" run --rm --entrypoint certbot certbot certonly \
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm --entrypoint certbot certbot certonly \
   --webroot -w /var/www/certbot \
   --email "${EMAIL}" \
   --agree-tos \
@@ -30,6 +31,6 @@ docker compose -f "${COMPOSE_FILE}" run --rm --entrypoint certbot certbot certon
   "${DOMAIN_ARGS[@]}"
 
 echo "Перезапуск nginx с SSL..."
-docker compose -f "${COMPOSE_FILE}" up -d --force-recreate nginx
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate nginx
 
 echo "Сертификаты успешно выпущены"
