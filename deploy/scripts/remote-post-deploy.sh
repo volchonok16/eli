@@ -11,7 +11,7 @@ sudo_cmd() {
 }
 
 echo "=== Проверка Docker ==="
-if ! sudo_cmd command -v docker; then
+if ! sudo_cmd docker --version >/dev/null 2>&1; then
   echo "ERROR: docker не установлен на сервере" >&2
   exit 1
 fi
