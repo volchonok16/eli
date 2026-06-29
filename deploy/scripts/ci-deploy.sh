@@ -56,7 +56,7 @@ ssh_cmd "mkdir -p /home/${SSH_USER}/deploy-tmp/be"
 SSHPASS="${SSH_PASS}" sshpass -e rsync -az \
   -e "ssh -p ${SSH_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
   --delete \
-  be/dist/ be/package.json be/package-lock.json be/prisma/ be/Dockerfile be/.dockerignore \
+  be/dist be/package.json be/package-lock.json be/prisma be/Dockerfile be/.dockerignore \
   "${SSH_USER}@${SSH_IP}:/home/${SSH_USER}/deploy-tmp/be/"
 sudo_remote "mkdir -p /var/www/be && rsync -a --delete /home/${SSH_USER}/deploy-tmp/be/ /var/www/be/"
 ssh_cmd "rm -rf /home/${SSH_USER}/deploy-tmp/be"
