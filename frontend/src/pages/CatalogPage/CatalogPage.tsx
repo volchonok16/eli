@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { use3DTilt } from '@/shared/hooks/use3DTilt';
 import { useProducts } from './useProducts';
-import { ProductCard } from '@/shared/components';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
