@@ -17,18 +17,28 @@ fi
 echo "Запуск nginx (HTTP) для ACME challenge..."
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d nginx
 
+filter_resolvable_domains
+
 DOMAIN_ARGS=()
 for domain in "${DOMAINS[@]}"; do
   DOMAIN_ARGS+=(-d "${domain}")
 done
 
-echo "Выпуск сертификатов Let's Encrypt..."
+echo "Выпуск сертификатов Let's Encrypt для: ${DOMAINS[*]}"
+set +e
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm --entrypoint certbot certbot certonly \
   --webroot -w /var/www/certbot \
   --email "${EMAIL}" \
   --agree-tos \
   --no-eff-email \
   "${DOMAIN_ARGS[@]}"
+certbot_rc=$?
+set -e
+
+if [ "${certbot_rc}" -ne 0 ]; then
+  echo "WARNING: certbot не смог выпустить сертификат (код ${certbot_rc})" >&2
+  exit 1
+fi
 
 echo "Перезапуск nginx с SSL..."
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate nginx

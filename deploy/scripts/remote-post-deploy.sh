@@ -59,10 +59,16 @@ compose up -d --build --remove-orphans
 echo "=== Certbot: выпуск/проверка сертификатов ==="
 if compose run --rm --entrypoint test certbot \
   -f /etc/letsencrypt/live/xn--e1aaincbri4a7g.xn--p1ai/fullchain.pem 2>/dev/null; then
-  sudo_cmd bash /var/www/infra/scripts/certbot-expand.sh
-  sudo_cmd bash /var/www/infra/scripts/certbot-renew.sh
+  if ! sudo_cmd bash /var/www/infra/scripts/certbot-expand.sh; then
+    echo "WARNING: не удалось расширить сертификат — проверьте DNS для всех поддоменов" >&2
+  fi
+  sudo_cmd bash /var/www/infra/scripts/certbot-renew.sh || true
 else
-  sudo_cmd bash /var/www/infra/scripts/certbot-init.sh
+  if ! sudo_cmd bash /var/www/infra/scripts/certbot-init.sh; then
+    echo "WARNING: не удалось выпустить SSL — сайт работает по HTTP. Добавьте DNS A-записи и перезапустите деплой." >&2
+  fi
 fi
+
+compose up -d --force-recreate nginx
 
 echo "=== Деплой завершён ==="
