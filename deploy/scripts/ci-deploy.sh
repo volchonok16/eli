@@ -55,9 +55,11 @@ echo "=== Деплой инфраструктуры ==="
 ssh_cmd "mkdir -p /home/${SSH_USER}/deploy-tmp/infra"
 sshpass -p "${SSH_PASS}" rsync -az \
   -e "ssh ${SSH_OPTS[*]}" \
-  deploy/docker-compose.prod.yml deploy/nginx/ deploy/scripts/ \
+  deploy/ \
   "${SSH_USER}@${SSH_IP}:/home/${SSH_USER}/deploy-tmp/infra/"
-sudo_remote "rsync -a /home/${SSH_USER}/deploy-tmp/infra/ /var/www/infra/ && chmod +x /var/www/infra/scripts/*.sh /var/www/infra/nginx/docker-entrypoint.sh"
+sudo_remote "rsync -a /home/${SSH_USER}/deploy-tmp/infra/ /var/www/infra/"
+sudo_remote "find /var/www/infra/scripts -name '*.sh' -exec chmod +x {} +"
+sudo_remote "chmod +x /var/www/infra/nginx/docker-entrypoint.sh"
 ssh_cmd "rm -rf /home/${SSH_USER}/deploy-tmp/infra"
 
 echo "=== Запись .env и post-deploy ==="
