@@ -5,7 +5,7 @@ COMPOSE_FILE="/var/www/infra/docker-compose.prod.yml"
 SUDO_PASS="${SSH_SUDO_PASS:?SSH_SUDO_PASS is required}"
 
 sudo_cmd() {
-  echo "${SUDO_PASS}" | sudo -S "$@"
+  echo "${SUDO_PASS}" | sudo -S bash -c "$(printf '%q' "$*")"
 }
 
 echo "=== Docker Compose: поднятие сервисов ==="

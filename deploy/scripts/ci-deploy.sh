@@ -15,7 +15,9 @@ ssh_cmd() {
 }
 
 sudo_remote() {
-  ssh_cmd "echo '${SSH_SUDO_PASS}' | sudo -S $*"
+  local escaped
+  escaped=$(printf '%q' "$*")
+  ssh_cmd "echo '${SSH_SUDO_PASS}' | sudo -S bash -c ${escaped}"
 }
 
 rsync_to_remote() {
@@ -64,6 +66,6 @@ ssh_cmd "rm -rf /home/${SSH_USER}/deploy-tmp/infra"
 
 echo "=== Запись .env и post-deploy ==="
 printf '%s' "${ENV_FILE}" | ssh_cmd "cat > /tmp/be.env"
-sudo_remote "cp /tmp/be.env /var/www/be/.env && chmod 600 /var/www/be/.env && rm -f /tmp/be.env"
+sudo_remote "cp /tmp/be.env /var/www/be/.env && chmod 600 /var/www/be/.env && chown ${SSH_USER}:${SSH_USER} /var/www/be/.env && rm -f /tmp/be.env"
 
 ssh_cmd "SSH_SUDO_PASS='${SSH_SUDO_PASS}' bash -s" < deploy/scripts/remote-post-deploy.sh
