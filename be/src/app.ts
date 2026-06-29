@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import { config } from "./config.js";
+import { createOpenApiDocument } from "./openapi.js";
 import { authRouter } from "./routes/auth.js";
 import { productsRouter } from "./routes/products.js";
 import { servicesRouter } from "./routes/services.js";
@@ -33,6 +35,15 @@ export function createApp() {
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  const openApiDocument = createOpenApiDocument(config.apiUrl);
+  app.get("/docs/openapi.json", (_req, res) => {
+    res.json(openApiDocument);
+  });
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  app.get("/", (_req, res) => {
+    res.redirect("/docs");
   });
 
   app.use("/api/auth", authRouter);
