@@ -53,7 +53,7 @@ jobs:
         env:
           SSH_IP: ${{ secrets.ssh_ip }}
           SSH_USER: ${{ secrets.ssh_user }}
-          SSH_PORT: ${{ secrets.ssh_port }}
+          SSH_PORT: ${{ secrets.ssh_port || '22' }}
           SSH_PASS: ${{ secrets.ssh_pass }}
           SSH_SUDO_PASS: ${{ secrets.ssh_sudo_pass }}
           ENV_FILE: ${{ secrets.env }}
