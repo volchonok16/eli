@@ -65,10 +65,17 @@ if compose run --rm --entrypoint test certbot \
   sudo_cmd bash /var/www/infra/scripts/certbot-renew.sh || true
 else
   if ! sudo_cmd bash /var/www/infra/scripts/certbot-init.sh; then
-    echo "WARNING: не удалось выпустить SSL — сайт работает по HTTP. Добавьте DNS A-записи и перезапустите деплой." >&2
+    echo "WARNING: не удалось выпустить SSL — сайт доступен только по HTTP" >&2
+    echo "WARNING: используйте http:// (не https://) до успешного выпуска сертификата" >&2
   fi
 fi
 
 compose up -d --force-recreate nginx
+
+if ! sudo_cmd ss -tlnH sport = :443 2>/dev/null | grep -q .; then
+  echo "WARNING: порт 443 не слушается — HTTPS не активен" >&2
+else
+  echo "=== SSL активен (порт 443) ==="
+fi
 
 echo "=== Деплой завершён ==="
