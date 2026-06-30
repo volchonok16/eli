@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            admin/package-lock.json
+            frontend/package-lock.json
+            be/package-lock.json
+
+      - name: Build admin
+        working-directory: admin
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build backend
+        working-directory: be
+        run: |
+          npm ci
+          npm run db:generate
+          npm run build
+
+      - name: Install deploy tools
+        run: sudo apt-get update && sudo apt-get install -y sshpass rsync
+
+      - name: Deploy to server
+        env:
+          SSH_IP: ${{ secrets.ssh_ip }}
+          SSH_USER: ${{ secrets.ssh_user }}
+          SSH_PORT: ${{ secrets.ssh_port || '22' }}
+          SSH_PASS: ${{ secrets.ssh_pass }}
+          SSH_SUDO_PASS: ${{ secrets.ssh_sudo_pass }}
+          ENV_FILE: ${{ secrets.env }}
+        run: bash deploy/scripts/ci-deploy.sh

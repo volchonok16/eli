@@ -1,9 +1,11 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import {
   completeOrderByPaymentLinkId,
   completeOrderByTochkaOperationId,
 } from "../services/order.js";
 import { tochkaService } from "../services/tochka.js";
+import { config } from "../config.js";
 import { prisma } from "../db/prisma.js";
 import { paramId } from "../utils/params.js";
 
@@ -21,7 +23,40 @@ interface TochkaWebhookPayload {
   };
 }
 
+function verifyTochkaSignature(
+  rawBody: string,
+  signature: string | undefined
+): boolean {
+  if (!config.tochka.webhookSecret) {
+    return true;
+  }
+  if (!signature) {
+    return false;
+  }
+
+  const expected = createHmac("sha256", config.tochka.webhookSecret)
+    .update(rawBody)
+    .digest("hex");
+
+  try {
+    return timingSafeEqual(
+      Buffer.from(expected),
+      Buffer.from(signature.replace(/^sha256=/, ""))
+    );
+  } catch {
+    return false;
+  }
+}
+
 webhooksRouter.post("/tochka", async (req, res) => {
+  const rawBody = JSON.stringify(req.body);
+  const signature = req.headers["x-tochka-signature"] as string | undefined;
+
+  if (!verifyTochkaSignature(rawBody, signature)) {
+    res.status(401).json({ error: "Неверная подпись вебхука" });
+    return;
+  }
+
   const payload = req.body as TochkaWebhookPayload;
   const paymentLinkId =
     payload.paymentLinkId ?? payload.Data?.paymentLinkId;
@@ -63,8 +98,8 @@ webhooksRouter.post("/tochka/confirm/:orderId", async (req, res) => {
     return;
   }
 
-  if (order.status === "PAID") {
-    res.json({ status: "PAID" });
+  if (order.status === "PAID" || order.status === "COMPLETED") {
+    res.json({ status: order.status });
     return;
   }
 

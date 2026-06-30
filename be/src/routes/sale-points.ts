@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { adminAuthMiddleware } from "../middleware/auth.js";
@@ -27,24 +28,49 @@ const upload = multer({
 const salePointSchema = z.object({
   shortName: z.string().min(1, "Короткое название обязательно"),
   address: z.string().min(1, "Адрес обязателен"),
+  lat: z.coerce.number().nullable().optional(),
+  lng: z.coerce.number().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  workingHours: z.record(z.unknown()).nullable().optional(),
+  isActive: z.coerce.boolean().optional(),
 });
 
 function serializeSalePoint(point: {
   id: string;
   shortName: string;
   address: string;
+  lat: { toString(): string } | null;
+  lng: { toString(): string } | null;
+  phone: string | null;
+  description: string | null;
+  workingHours: unknown;
   imageKey: string | null;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }) {
   return {
-    ...point,
+    id: point.id,
+    shortName: point.shortName,
+    address: point.address,
+    lat: point.lat ? Number(point.lat) : null,
+    lng: point.lng ? Number(point.lng) : null,
+    phone: point.phone,
+    description: point.description,
+    workingHours: point.workingHours,
+    imageKey: point.imageKey,
     imageUrl: point.imageKey ? getImagePublicUrl(point.imageKey) : null,
+    isActive: point.isActive,
+    createdAt: point.createdAt,
+    updatedAt: point.updatedAt,
   };
 }
 
-salePointsRouter.get("/", async (_req, res) => {
+salePointsRouter.get("/", async (req, res) => {
+  const onlyActive = req.query.isActive === "true";
   const points = await prisma.salePoint.findMany({
+    where: onlyActive ? { isActive: true } : undefined,
     orderBy: { shortName: "asc" },
   });
   res.json(points.map(serializeSalePoint));
@@ -67,7 +93,20 @@ salePointsRouter.post("/", adminAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const point = await prisma.salePoint.create({ data: parsed.data });
+  const point = await prisma.salePoint.create({
+    data: {
+      shortName: parsed.data.shortName,
+      address: parsed.data.address,
+      lat: parsed.data.lat ?? null,
+      lng: parsed.data.lng ?? null,
+      phone: parsed.data.phone ?? null,
+      description: parsed.data.description ?? null,
+      workingHours: (parsed.data.workingHours ?? undefined) as
+        | Prisma.InputJsonValue
+        | undefined,
+      isActive: parsed.data.isActive ?? true,
+    },
+  });
   res.status(201).json(serializeSalePoint(point));
 });
 
@@ -87,7 +126,18 @@ salePointsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
 
   const point = await prisma.salePoint.update({
     where: { id },
-    data: parsed.data,
+    data: {
+      shortName: parsed.data.shortName,
+      address: parsed.data.address,
+      lat: parsed.data.lat ?? null,
+      lng: parsed.data.lng ?? null,
+      phone: parsed.data.phone ?? null,
+      description: parsed.data.description ?? null,
+      workingHours: (parsed.data.workingHours ?? undefined) as
+        | Prisma.InputJsonValue
+        | undefined,
+      isActive: parsed.data.isActive ?? existing.isActive,
+    },
   });
   res.json(serializeSalePoint(point));
 });

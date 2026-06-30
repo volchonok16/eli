@@ -1,17 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { UserRole } from "@prisma/client";
 import { config } from "../config.js";
 
-export interface AdminAuthPayload {
-  role: "admin";
+export interface EnvAdminAuthPayload {
+  role: "ADMIN";
+  source: "env";
 }
 
-export interface UserAuthPayload {
-  role: "user";
+export interface DbUserAuthPayload {
+  role: UserRole;
   userId: string;
 }
 
-export type AuthPayload = AdminAuthPayload | UserAuthPayload;
+export type AuthPayload = EnvAdminAuthPayload | DbUserAuthPayload;
 
 export interface AuthRequest extends Request {
   auth?: AuthPayload;
@@ -40,19 +42,36 @@ export function authMiddleware(
   }
 }
 
-export function adminAuthMiddleware(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): void {
-  authMiddleware(req, res, () => {
-    if (req.auth?.role !== "admin") {
+export function requireRole(...roles: UserRole[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    authMiddleware(req, res, () => {
+      if (!req.auth) return;
+
+      if ("source" in req.auth && req.auth.role === "ADMIN") {
+        if (roles.includes(UserRole.ADMIN)) {
+          next();
+          return;
+        }
+        res.status(403).json({ error: "Недостаточно прав" });
+        return;
+      }
+
+      if ("userId" in req.auth && roles.includes(req.auth.role)) {
+        next();
+        return;
+      }
+
       res.status(403).json({ error: "Недостаточно прав" });
-      return;
-    }
-    next();
-  });
+    });
+  };
 }
+
+export const adminAuthMiddleware = requireRole(UserRole.ADMIN);
+
+export const staffAuthMiddleware = requireRole(
+  UserRole.ADMIN,
+  UserRole.MANAGER
+);
 
 export function userAuthMiddleware(
   req: AuthRequest,
@@ -60,7 +79,7 @@ export function userAuthMiddleware(
   next: NextFunction
 ): void {
   authMiddleware(req, res, () => {
-    if (req.auth?.role !== "user") {
+    if (!req.auth || !("userId" in req.auth)) {
       res.status(403).json({ error: "Требуется авторизация пользователя" });
       return;
     }
@@ -81,7 +100,7 @@ export function optionalUserAuthMiddleware(
 
   try {
     const payload = verifyToken(header.slice(7));
-    if (payload.role === "user") {
+    if ("userId" in payload) {
       req.auth = payload;
     }
     next();
@@ -91,8 +110,12 @@ export function optionalUserAuthMiddleware(
 }
 
 export function getUserId(req: AuthRequest): string {
-  if (req.auth?.role !== "user") {
+  if (!req.auth || !("userId" in req.auth)) {
     throw new Error("Требуется авторизация пользователя");
   }
   return req.auth.userId;
+}
+
+export function isEnvAdmin(auth?: AuthPayload): boolean {
+  return !!auth && "source" in auth && auth.role === "ADMIN";
 }

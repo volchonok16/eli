@@ -7,11 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  CUSTOMER
+  WHOLESALE
+  PARTNER
+  MANAGER
+  ADMIN
+}
+
 enum OrderStatus {
   PENDING
   PAID
-  FAILED
+  PROCESSING
+  ASSEMBLED
+  DELIVERING
+  COMPLETED
   CANCELLED
+  FAILED
+}
+
+enum DeliveryType {
+  SELF_PICKUP
+  COURIER
+}
+
+enum PartnerStatus {
+  NEW
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+enum PartnerDocumentType {
+  PHOTO
+  CONTRACT
+  LEGAL_DOCS
 }
 
 enum ApplicationStatus {
@@ -22,15 +52,22 @@ enum ApplicationStatus {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  phone        String   @unique
-  passwordHash String
-  name         String
-  avatarKey    String?
-  cart         Cart?
-  orders       Order[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  phone             String?   @unique
+  avatarKey         String?
+  role              UserRole  @default(CUSTOMER)
+  wholesaleApproved Boolean   @default(false)
+  companyName       String?
+  inn               String?
+  cart              Cart?
+  orders            Order[]
+  partnerApplications PartnerApplication[]
+  cpRequests        CpRequest[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model Cart {
@@ -53,31 +90,46 @@ model CartItem {
   @@unique([cartId, productId])
 }
 
+model Category {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  imageKey  String?
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Category[] @relation("CategoryTree")
+  products  Product[]
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+}
+
 model Product {
-  id          String         @id @default(uuid())
+  id          String           @id @default(uuid())
+  sku         String?          @unique
   name        String
   description String?
-  price       Decimal        @db.Decimal(10, 2)
-  quantity    Int            @default(0)
-  inStock     Boolean        @default(true)
-  isHit       Boolean        @default(false)
+  careGuide   String?
+  height      Int?
+  heightLabel String?
+  sort        String?
+  price       Decimal          @db.Decimal(10, 2)
+  costPrice   Decimal?         @db.Decimal(10, 2)
+  quantity    Int              @default(0)
+  reserved    Int              @default(0)
+  inStock     Boolean          @default(true)
+  isHit       Boolean          @default(false)
+  isNew       Boolean          @default(false)
+  categoryId  String?
+  category    Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   salePointId String?
-  salePoint   SalePoint?     @relation(fields: [salePointId], references: [id], onDelete: SetNull)
+  salePoint   SalePoint?       @relation(fields: [salePointId], references: [id], onDelete: SetNull)
   images      ProductImage[]
   orderItems  OrderItem[]
   cartItems   CartItem[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model SalePoint {
-  id        String    @id @default(uuid())
-  shortName String
-  address   String
-  imageKey  String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  wholesalePrices WholesalePrice[]
+  reviews     Review[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model ProductImage {
@@ -89,6 +141,123 @@ model ProductImage {
   sortOrder Int     @default(0)
 }
 
+model WholesalePrice {
+  id          String  @id @default(uuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQuantity Int
+  price       Decimal @db.Decimal(10, 2)
+}
+
+model SalePoint {
+  id           String    @id @default(uuid())
+  shortName    String
+  address      String
+  lat          Decimal?  @db.Decimal(10, 7)
+  lng          Decimal?  @db.Decimal(10, 7)
+  phone        String?
+  description  String?
+  workingHours Json?
+  imageKey     String?
+  isActive     Boolean   @default(true)
+  products     Product[]
+  orders       Order[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model DeliveryZone {
+  id         String   @id @default(uuid())
+  name       String
+  basePrice  Decimal  @db.Decimal(10, 2)
+  perKmPrice Decimal  @db.Decimal(10, 2)
+  polygon    Json
+  isActive   Boolean  @default(true)
+  orders     Order[]
+  createdAt  DateTime @default(now())
+}
+
+model Order {
+  id                String        @id @default(uuid())
+  status            OrderStatus   @default(PENDING)
+  totalAmount       Decimal       @db.Decimal(10, 2)
+  userId            String?
+  user              User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName      String?
+  customerPhone     String?
+  customerEmail     String?
+  deliveryType      DeliveryType?
+  salePointId       String?
+  salePoint         SalePoint?    @relation(fields: [salePointId], references: [id], onDelete: SetNull)
+  deliveryAddress   String?
+  deliveryZoneId    String?
+  deliveryZone      DeliveryZone? @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  deliveryCost      Decimal?      @db.Decimal(10, 2)
+  paymentLink       String?
+  tochkaOperationId String?       @unique
+  paymentLinkId     String?       @unique
+  cartReservedUntil DateTime?
+  paymentExpiresAt  DateTime?
+  cancelReason      String?
+  managerNote       String?
+  items             OrderItem[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+}
+
+model PartnerApplication {
+  id               String            @id @default(uuid())
+  userId           String?
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationName String?
+  contactName      String
+  phone            String
+  email            String?
+  landAddress      String
+  landArea         Decimal?          @db.Decimal(10, 2)
+  description      String?
+  status           PartnerStatus     @default(NEW)
+  statusNote       String?
+  documents        PartnerDocument[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model PartnerDocument {
+  id                   String              @id @default(uuid())
+  partnerApplicationId String
+  application          PartnerApplication  @relation(fields: [partnerApplicationId], references: [id], onDelete: Cascade)
+  key                  String
+  type                 PartnerDocumentType @default(PHOTO)
+  originalName         String?
+  createdAt            DateTime            @default(now())
+}
+
+model CpRequest {
+  id           String   @id @default(uuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  companyName  String
+  inn          String?
+  contactName  String
+  phone        String
+  email        String?
+  requirements String?
+  isProcessed  Boolean  @default(false)
+  managerNote  String?
+  createdAt    DateTime @default(now())
+}
+
 model Service {
   id           String        @id @default(uuid())
   name         String
@@ -98,15 +267,6 @@ model Service {
   applications Application[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-}
-
-model Feedback {
-  id        String   @id @default(uuid())
-  name      String
-  contact   String
-  message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
 }
 
 model Application {
@@ -121,8 +281,19 @@ model Application {
   updatedAt DateTime          @updatedAt
 }
 
+model Feedback {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model Review {
   id          String   @id @default(uuid())
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   authorName  String
   text        String
   rating      Int      @default(5)
@@ -131,26 +302,15 @@ model Review {
   updatedAt   DateTime @updatedAt
 }
 
-model Order {
-  id                String      @id @default(uuid())
-  userId            String?
-  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  status            OrderStatus @default(PENDING)
-  totalAmount       Decimal     @db.Decimal(10, 2)
-  paymentLink       String?
-  tochkaOperationId String?     @unique
-  paymentLinkId     String?     @unique
-  items             OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-}
-
-model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+model PromoBanner {
+  id        String    @id @default(uuid())
+  title     String
+  subtitle  String?
+  imageKey  String?
+  linkUrl   String?
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
 }

@@ -11,6 +11,7 @@ const reviewSchema = z.object({
   text: z.string().min(1, "Текст отзыва обязателен"),
   rating: z.coerce.number().int().min(1).max(5).optional(),
   isPublished: z.coerce.boolean().optional(),
+  productId: z.string().uuid().nullable().optional(),
 });
 
 reviewsRouter.get("/published", async (_req, res) => {
@@ -45,13 +46,14 @@ reviewsRouter.post("/", adminAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const { authorName, text, rating, isPublished } = parsed.data;
+  const { authorName, text, rating, isPublished, productId } = parsed.data;
   const review = await prisma.review.create({
     data: {
       authorName,
       text,
       rating: rating ?? 5,
       isPublished: isPublished ?? false,
+      productId: productId ?? null,
     },
   });
   res.status(201).json(review);
@@ -71,7 +73,7 @@ reviewsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const { authorName, text, rating, isPublished } = parsed.data;
+  const { authorName, text, rating, isPublished, productId } = parsed.data;
   const review = await prisma.review.update({
     where: { id },
     data: {
@@ -79,6 +81,7 @@ reviewsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
       text,
       rating: rating ?? 5,
       isPublished: isPublished ?? false,
+      productId: productId ?? null,
     },
   });
   res.json(review);

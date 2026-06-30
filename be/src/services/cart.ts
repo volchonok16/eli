@@ -42,6 +42,7 @@ export function serializeCart(cart: {
       description: string | null;
       price: { toString(): string };
       quantity: number;
+      reserved: number;
       inStock: boolean;
       isHit: boolean;
       salePointId: string | null;
@@ -70,7 +71,8 @@ export function serializeCart(cart: {
       price,
       subtotal,
       available:
-        item.product.inStock && item.product.quantity >= item.quantity,
+        item.product.inStock &&
+        item.product.quantity - item.product.reserved >= item.quantity,
       product: {
         id: item.product.id,
         name: item.product.name,
