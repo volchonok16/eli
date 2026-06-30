@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { use3DTilt } from '@/shared/hooks/use3DTilt';
 import { useProducts } from './useProducts';
-import { ProductCard } from '@/shared/components';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -71,8 +70,11 @@ export const CatalogPage = () => {
 
   return (
     <div className="min-h-screen bg-surface">
-      <section className="py-16 bg-surface-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-16 bg-surface-dark relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.04]">
+          <img src="/images/photos/classic-christmas-fir.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -3,6 +3,9 @@ import { SectionHeading } from '@/shared/components';
 
 export const FinalCta = () => (
   <section className="py-24 bg-primary text-text-inverse text-center relative overflow-hidden">
+    <div className="absolute inset-0 opacity-8">
+      <img src="/images/photos/evening-winter-showcase.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    </div>
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(202,138,4,0.1),transparent_70%)]" />
 
     <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">

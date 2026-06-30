@@ -2,6 +2,9 @@ import { SectionHeading, StatsSection } from '@/shared/components';
 
 export const StatsBanner = () => (
   <section className="py-20 bg-primary relative overflow-hidden">
+    <div className="absolute inset-0 opacity-10">
+      <img src="/images/photos/premium-christmas-tree-collection.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    </div>
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(202,138,4,0.08),transparent_70%)]" />
 
     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

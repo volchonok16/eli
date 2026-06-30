@@ -40,8 +40,8 @@ export const AboutPage = () => (
               <Link to="/catalog" className="btn-primary">Смотреть каталог</Link>
             </div>
           </div>
-          <div className="aspect-[4/3] bg-surface-dark border border-surface-muted flex items-center justify-center">
-            <img src="/images/nursery.svg" alt="Питомник Eli" className="w-full h-full object-cover" loading="lazy" />
+          <div className="aspect-[4/3] bg-surface-dark border border-surface-muted flex items-center justify-center overflow-hidden">
+            <img src="/images/photos/signature-noble-fir.png" alt="Питомник Eli" className="w-full h-full object-cover" loading="lazy" />
           </div>
         </div>
       </div>

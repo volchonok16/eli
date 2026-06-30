@@ -50,6 +50,9 @@ export const StickyShowcase = ({ slides = defaultSlides }: StickyShowcaseProps) 
 
   return (
     <div ref={containerRef} className="relative bg-primary" style={{ height: `${totalSlides * 100}vh` }}>
+      <div className="absolute inset-0 opacity-10">
+        <img src="/images/photos/evening-winter-showcase.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+      </div>
       <div className="sticky top-0 h-screen flex items-center overflow-hidden">
         {slides.map((slide, i) => {
           const start = i * slideHeight;
