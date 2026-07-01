@@ -33,6 +33,8 @@ export function createApp() {
   );
   app.use(express.json());
 
+  app.use(express.json());
+
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
