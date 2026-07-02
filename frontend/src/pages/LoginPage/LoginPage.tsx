@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/shared/contexts';
+import { useLogin } from './hooks/useLogin';
 
 export const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const loginMutation = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,15 +17,28 @@ export const LoginPage = () => {
     return null;
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!email || !password) {
       setError('Заполните все поля');
       return;
     }
-    login('demo-token', { id: '1', email, name: email.split('@')[0], role: 'CUSTOMER' });
-    navigate('/profile');
+
+    loginMutation.mutate(
+      { email, password },
+      {
+        onSuccess: (data) => {
+          if ('user' in data && data.user) {
+            login(data.token, data.user);
+          }
+          navigate('/profile');
+        },
+        onError: (err) => {
+          setError(err instanceof Error ? err.message : 'Ошибка входа');
+        },
+      },
+    );
   };
 
   return (
@@ -49,7 +64,9 @@ export const LoginPage = () => {
             <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" required />
           </div>
 
-          <button type="submit" className="btn-primary w-full">Войти</button>
+          <button type="submit" disabled={loginMutation.isPending} className="btn-primary w-full">
+            {loginMutation.isPending ? 'Вход...' : 'Войти'}
+          </button>
         </form>
 
         <p className="text-center text-sm text-text-muted mt-6">

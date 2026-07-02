@@ -18,7 +18,7 @@ import { PartnersPage } from '@/pages/PartnersPage';
 export const App = () => (
   <div className="flex min-h-screen flex-col">
     <Header />
-    <main className="flex-1">
+    <main className="flex-1 pt-[112px] sm:pt-[116px]">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />

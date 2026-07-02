@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { cartApi } from '@/api/endpoints/cart';
 
 interface CartItem {
   id: string;
@@ -47,10 +49,23 @@ const CartContext = createContext<{
   updateQuantity: (itemId: string, quantity: number) => void;
   removeItem: (itemId: string) => void;
   itemCount: number;
+  isLoading: boolean;
 } | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const { data: cartData } = useQuery({
+    queryKey: ['cart'],
+    queryFn: cartApi.get,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
+  });
+
+  useEffect(() => {
+    if (cartData) {
+      dispatch({ type: 'SET_ITEMS', items: cartData.items as CartItem[], total: cartData.total });
+    }
+  }, [cartData]);
 
   const setItems = useCallback((items: CartItem[], total: number) => {
     dispatch({ type: 'SET_ITEMS', items, total });
@@ -67,7 +82,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ state, setItems, updateQuantity, removeItem, itemCount }}>
+    <CartContext.Provider value={{ state, setItems, updateQuantity, removeItem, itemCount, isLoading: false }}>
       {children}
     </CartContext.Provider>
   );

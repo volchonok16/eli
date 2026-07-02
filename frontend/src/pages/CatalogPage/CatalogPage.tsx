@@ -66,7 +66,10 @@ const SkeletonGrid = () => (
 export const CatalogPage = () => {
   const [sort, setSort] = useState<string>('popular');
   const [category, setCategory] = useState<string>('');
-  const { data: products, isLoading, isError } = useProducts({ category: category || undefined });
+  const { data: products, isLoading, isError } = useProducts({
+    category: category || undefined,
+    ...(sort !== 'popular' && { sort }),
+  });
 
   return (
     <div className="min-h-screen bg-surface">

@@ -1,31 +1,14 @@
-export interface Product {
-  id: string;
-  name: string;
-  latinName: string;
-  description: string;
-  height: string;
-  price: number;
-  category: string;
-  images: string[];
-  inStock: boolean;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  role: 'CUSTOMER' | 'ADMIN';
-}
-
-export interface CartItem {
-  productId: string;
-  quantity: number;
-  product?: Product;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type { UserResponse as User } from '@/api/endpoints/auth';
+export type { ProductResponse as Product, ProductFilters } from '@/api/endpoints/products';
+export type { OrderResponse as Order, OrderStatus, DeliveryType } from '@/api/endpoints/orders';
+export type { CategoryResponse as Category } from '@/api/endpoints/categories';
+export type { SalePointResponse as SalePoint } from '@/api/endpoints/sale-points';
+export type { ReviewResponse as Review } from '@/api/endpoints/reviews';
+export type { DeliveryZoneResponse as DeliveryZone, ZoneCheckResult } from '@/api/endpoints/delivery-zones';
+export type { PromoBannerResponse as PromoBanner } from '@/api/endpoints/banners';
+export type { ServiceResponse as Service } from '@/api/endpoints/services';
+export type { WholesalePriceResponse as WholesalePrice } from '@/api/endpoints/wholesale';
+export type { PartnerApplicationResponse as PartnerApplication, PartnerStatus } from '@/api/endpoints/partner-applications';
+export type { CpRequestResponse as CpRequest } from '@/api/endpoints/cp-requests';
+export type { ApplicationResponse as Application, ApplicationStatus } from '@/api/endpoints/applications';
+export type { FeedbackResponse as Feedback } from '@/api/endpoints/feedback';

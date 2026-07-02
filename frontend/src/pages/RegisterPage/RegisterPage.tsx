@@ -2,13 +2,16 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/shared/contexts';
+import { useRegister } from './hooks/useRegister';
 
 export const RegisterPage = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const registerMutation = useRegister();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
   if (isAuthenticated) {
@@ -16,15 +19,30 @@ export const RegisterPage = () => {
     return null;
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!name || !email || !password) {
-      setError('Заполните все поля');
+      setError('Заполните все обязательные поля');
       return;
     }
-    login('demo-token', { id: '1', email, name, role: 'CUSTOMER' });
-    navigate('/profile');
+    if (password.length < 6) {
+      setError('Пароль должен быть не короче 6 символов');
+      return;
+    }
+
+    registerMutation.mutate(
+      { name, email, password, phone: phone || undefined },
+      {
+        onSuccess: (data) => {
+          login(data.token, data.user);
+          navigate('/profile');
+        },
+        onError: (err) => {
+          setError(err instanceof Error ? err.message : 'Ошибка регистрации');
+        },
+      },
+    );
   };
 
   return (
@@ -51,11 +69,18 @@ export const RegisterPage = () => {
           </div>
 
           <div>
+            <label htmlFor="reg-phone" className="block text-sm text-text-muted mb-1">Телефон</label>
+            <input id="reg-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="input-field" />
+          </div>
+
+          <div>
             <label htmlFor="reg-password" className="block text-sm text-text-muted mb-1">Пароль</label>
             <input id="reg-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" required />
           </div>
 
-          <button type="submit" className="btn-primary w-full">Зарегистрироваться</button>
+          <button type="submit" disabled={registerMutation.isPending} className="btn-primary w-full">
+            {registerMutation.isPending ? 'Регистрация...' : 'Зарегистрироваться'}
+          </button>
         </form>
 
         <p className="text-center text-sm text-text-muted mt-6">

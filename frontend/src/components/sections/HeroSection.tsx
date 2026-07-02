@@ -16,13 +16,13 @@ export const HeroSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[100vh] flex items-center overflow-hidden bg-surface-dark"
+      className="relative min-h-[100vh] flex flex-col lg:flex-row overflow-hidden bg-surface-dark"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_35%,rgba(202,138,4,0.04),transparent_60%),radial-gradient(ellipse_at_25%_80%,rgba(28,25,23,0.02),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_35%,rgba(202,138,4,0.04),transparent_60%),radial-gradient(ellipse_at_25%_80%,rgba(28,25,23,0.02),transparent_55%)] pointer-events-none" />
 
       <motion.div
         style={{ scale: bgScale }}
-        className="absolute right-0 top-0 bottom-0 w-full lg:w-[55%]"
+        className="relative w-full lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-[55%] h-[50vh] lg:h-full shrink-0"
       >
         <div className="absolute inset-0 lg:left-24">
           <img
@@ -33,12 +33,12 @@ export const HeroSection = () => {
             loading="eager"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-surface-dark/92 via-surface-dark/55 to-surface-dark/8 lg:from-surface-dark/98 lg:via-surface-dark/45 lg:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface-dark/30 via-transparent to-surface-dark lg:bg-gradient-to-r lg:from-surface-dark/98 lg:via-surface-dark/45 lg:to-transparent" />
       </motion.div>
 
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
-        className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28"
+        className="relative z-10 flex items-center w-full lg:absolute lg:inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-28"
       >
         <div className="max-w-xl lg:max-w-[34rem]">
           <motion.div
@@ -46,7 +46,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <p className="text-xs sm:text-sm text-text-muted/70 uppercase tracking-[0.25em] mb-6 font-medium">
+            <p className="text-xs sm:text-sm text-text-muted/70 uppercase tracking-[0.25em] mb-4 sm:mb-6 font-medium">
               Коллекция 2026
             </p>
           </motion.div>
@@ -57,7 +57,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-5xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
+              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
                 Элитные
               </span>
             </motion.span>
@@ -66,7 +66,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-5xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
+              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
                 ели
               </span>
             </motion.span>
@@ -75,7 +75,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-5xl sm:text-7xl md:text-8xl text-accent italic leading-[0.92] tracking-tight">
+              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-accent italic leading-[0.92] tracking-tight">
                 для вашего сада
               </span>
             </motion.span>
@@ -85,14 +85,14 @@ export const HeroSection = () => {
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ duration: 0.8, delay: 1.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="w-16 h-px bg-accent/30 mb-6 sm:mb-8 origin-left"
+            className="w-16 h-px bg-accent/40 mb-5 sm:mb-8 origin-left"
           />
 
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.3, ease: 'easeOut' }}
-            className="text-base sm:text-lg text-text-muted/90 mb-8 sm:mb-10 max-w-md leading-relaxed"
+            className="text-sm sm:text-lg text-text-muted/90 mb-6 sm:mb-10 max-w-md leading-relaxed"
           >
             Премиальные хвойные деревья из европейских питомников.
             <br className="hidden sm:block" />
@@ -103,11 +103,11 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.5 }}
-            className="flex flex-wrap items-center gap-4 sm:gap-6"
+            className="flex flex-wrap items-center gap-3 sm:gap-6"
           >
             <Link
               to="/catalog"
-              className="btn-primary text-sm sm:text-base px-8 sm:px-10 py-4"
+              className="btn-primary text-sm sm:text-base px-6 sm:px-10 py-3 sm:py-4"
             >
               Смотреть каталог
             </Link>
@@ -123,7 +123,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.8 }}
-            className="flex items-center gap-8 sm:gap-12 mt-14 sm:mt-16"
+            className="flex items-center gap-6 sm:gap-12 mt-10 sm:mt-16"
           >
             {[
               ['500+', 'довольных клиентов'],
@@ -131,22 +131,12 @@ export const HeroSection = () => {
               ['98%', 'приживаемость'],
             ].map(([value, label]) => (
               <div key={label}>
-                <p className="font-display text-xl sm:text-2xl text-primary">{value}</p>
-                <p className="text-xs sm:text-sm text-text-muted/80 mt-0.5">{label}</p>
+                <p className="font-display text-lg sm:text-2xl text-primary">{value}</p>
+                <p className="text-[10px] sm:text-sm text-text-muted/70 sm:text-text-muted/80 mt-0.5">{label}</p>
               </div>
             ))}
           </motion.div>
         </div>
-      </motion.div>
-
-      <motion.div
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-10"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-5 h-5 text-text-muted/15">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
       </motion.div>
     </section>
   );

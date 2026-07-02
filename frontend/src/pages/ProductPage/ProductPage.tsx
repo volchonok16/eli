@@ -1,15 +1,21 @@
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { productsApi } from '@/api/endpoints/products';
+import { useProduct } from './hooks/useProduct';
+import { useAddToCart } from '@/pages/CartPage/useCart';
+import { useState } from 'react';
 
 export const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: product, isLoading } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => productsApi.getById(id!),
-    enabled: !!id,
-  });
+  const { data: product, isLoading } = useProduct(id!);
+  const addToCart = useAddToCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAddToCart = () => {
+    if (!id) return;
+    addToCart.mutate({ productId: id }, {
+      onSuccess: () => { setAdded(true); setTimeout(() => setAdded(false), 2000); },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -69,9 +75,19 @@ export const ProductPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="btn-primary flex-1">Добавить в корзину</button>
+              <button
+                onClick={handleAddToCart}
+                disabled={addToCart.isPending || added}
+                className={`btn-primary flex-1 ${added ? 'bg-green-700' : ''}`}
+              >
+                {added ? 'Добавлено ✓' : addToCart.isPending ? '...' : 'Добавить в корзину'}
+              </button>
               <Link to="/catalog" className="btn-outline flex-1 text-center">В каталог</Link>
             </div>
+
+            {addToCart.isError && (
+              <p className="text-error text-sm mt-3">Не удалось добавить в корзину</p>
+            )}
           </motion.div>
         </div>
       </div>
