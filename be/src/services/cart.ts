@@ -39,6 +39,7 @@ export function serializeCart(cart: {
     product: {
       id: string;
       name: string;
+      heightLabel: string | null;
       description: string | null;
       price: { toString(): string };
       quantity: number;
@@ -67,6 +68,7 @@ export function serializeCart(cart: {
 
     return {
       id: item.id,
+      productId: item.product.id,
       quantity: item.quantity,
       price,
       subtotal,
@@ -76,6 +78,7 @@ export function serializeCart(cart: {
       product: {
         id: item.product.id,
         name: item.product.name,
+        heightLabel: item.product.heightLabel,
         description: item.product.description,
         price,
         quantity: item.product.quantity,

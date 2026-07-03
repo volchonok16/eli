@@ -6,6 +6,7 @@ export const useCart = () =>
     queryKey: ['cart'],
     queryFn: cartApi.get,
     staleTime: 30 * 1000,
+    retry: false,
   });
 
 export const useAddToCart = () => {
@@ -20,8 +21,8 @@ export const useAddToCart = () => {
 export const useUpdateCartQuantity = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (params: { itemId: string; quantity: number }) =>
-      cartApi.updateQuantity(params.itemId, params.quantity),
+    mutationFn: (params: { productId: string; quantity: number }) =>
+      cartApi.updateQuantity(params.productId, params.quantity),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
   });
 };
@@ -29,15 +30,7 @@ export const useUpdateCartQuantity = () => {
 export const useRemoveFromCart = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (itemId: string) => cartApi.removeItem(itemId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
-  });
-};
-
-export const useCheckout = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: cartApi.checkout,
+    mutationFn: (productId: string) => cartApi.removeItem(productId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
   });
 };

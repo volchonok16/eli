@@ -23,6 +23,8 @@ filesRouter.get(/.+/, async (req, res) => {
 
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Access-Control-Allow-Origin", "*");
 
     const stream = await getProductImage(key);
     stream.on("error", () => {

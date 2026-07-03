@@ -66,10 +66,10 @@ export const authApi = {
     apiClient.get<MeResult>('/auth/me').then((r) => r.data),
 
   updateProfile: (data: ProfileUpdatePayload) =>
-    apiClient.put<UserResponse>('/auth/me', data).then((r) => r.data),
+    apiClient.put<{ user: UserResponse }>('/auth/me', data).then((r) => r.data.user),
 
   updateProfileWithAvatar: (formData: FormData) =>
-    apiClient.put<UserResponse>('/auth/me', formData, {
+    apiClient.put<{ user: UserResponse }>('/auth/me', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+    }).then((r) => r.data.user),
 };

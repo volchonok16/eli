@@ -28,9 +28,9 @@ async function ensureBucket(): Promise<void> {
   bucketReady = true;
 }
 
-/** Публичный URL через API — MinIO bucket по умолчанию закрыт */
+/** Относительный URL — картинки идут через тот же origin (Vite proxy / nginx) */
 export function getImagePublicUrl(key: string): string {
-  return `${config.apiUrl}/api/files/${key}`;
+  return `/api/files/${key}`;
 }
 
 export async function uploadImage(

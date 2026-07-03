@@ -25,7 +25,7 @@ export const config = {
   port: parseInt(optional("PORT", "3000"), 10),
   apiUrl: optional("API_URL", "http://localhost:3000"),
   adminUrl: optional("ADMIN_URL", "http://localhost:5173"),
-  feUrl: optional("FE_URL", "http://localhost:5174"),
+  feUrl: optional("FE_URL", "http://localhost:5173"),
 
   databaseUrl: optional(
     "DATABASE_URL",

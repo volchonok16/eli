@@ -2,25 +2,45 @@ import { createContext, useContext, useReducer, useCallback, useEffect, type Rea
 import { useQuery } from '@tanstack/react-query';
 import { cartApi } from '@/api/endpoints/cart';
 
-interface CartItem {
+interface BackendCartItem {
   id: string;
   productId: string;
-  name: string;
-  height: string;
-  price: number;
   quantity: number;
-  image: string;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    heightLabel: string | null;
+    images: { url: string }[];
+  };
+}
+
+interface BackendCartResponse {
+  items: BackendCartItem[];
+  totalAmount: number;
+}
+
+function mapCartItem(item: BackendCartItem) {
+  return {
+    id: item.id,
+    productId: item.productId,
+    name: item.product.name,
+    height: item.product.heightLabel ?? '—',
+    price: item.price,
+    quantity: item.quantity,
+    image: item.product.images[0]?.url ?? '',
+  };
 }
 
 interface CartState {
-  items: CartItem[];
+  items: ReturnType<typeof mapCartItem>[];
   total: number;
 }
 
 type CartAction =
-  | { type: 'SET_ITEMS'; items: CartItem[]; total: number }
-  | { type: 'UPDATE_QUANTITY'; itemId: string; quantity: number }
-  | { type: 'REMOVE_ITEM'; itemId: string };
+  | { type: 'SET_ITEMS'; items: ReturnType<typeof mapCartItem>[]; total: number }
+  | { type: 'UPDATE_QUANTITY'; productId: string; quantity: number }
+  | { type: 'REMOVE_ITEM'; productId: string };
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
@@ -28,12 +48,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return { items: action.items, total: action.total };
     case 'UPDATE_QUANTITY': {
       const items = state.items.map((item) =>
-        item.id === action.itemId ? { ...item, quantity: action.quantity } : item,
+        item.productId === action.productId ? { ...item, quantity: action.quantity } : item,
       );
       return { items, total: items.reduce((sum, i) => sum + i.price * i.quantity, 0) };
     }
     case 'REMOVE_ITEM': {
-      const items = state.items.filter((item) => item.id !== action.itemId);
+      const items = state.items.filter((item) => item.productId !== action.productId);
       return { items, total: items.reduce((sum, i) => sum + i.price * i.quantity, 0) };
     }
     default:
@@ -45,9 +65,9 @@ const initialState: CartState = { items: [], total: 0 };
 
 const CartContext = createContext<{
   state: CartState;
-  setItems: (items: CartItem[], total: number) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
-  removeItem: (itemId: string) => void;
+  setItems: (items: ReturnType<typeof mapCartItem>[], total: number) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string) => void;
   itemCount: number;
   isLoading: boolean;
 } | null>(null);
@@ -59,24 +79,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     queryFn: cartApi.get,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
+    retry: false,
   });
 
   useEffect(() => {
     if (cartData) {
-      dispatch({ type: 'SET_ITEMS', items: cartData.items as CartItem[], total: cartData.total });
+      dispatch({
+        type: 'SET_ITEMS',
+        items: cartData.items,
+        total: cartData.total,
+      });
     }
   }, [cartData]);
 
-  const setItems = useCallback((items: CartItem[], total: number) => {
+  const setItems = useCallback((items: ReturnType<typeof mapCartItem>[], total: number) => {
     dispatch({ type: 'SET_ITEMS', items, total });
   }, []);
 
-  const updateQuantity = useCallback((itemId: string, quantity: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', itemId, quantity });
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
+    dispatch({ type: 'UPDATE_QUANTITY', productId, quantity });
   }, []);
 
-  const removeItem = useCallback((itemId: string) => {
-    dispatch({ type: 'REMOVE_ITEM', itemId });
+  const removeItem = useCallback((productId: string) => {
+    dispatch({ type: 'REMOVE_ITEM', productId });
   }, []);
 
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);

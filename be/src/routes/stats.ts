@@ -13,6 +13,33 @@ const paidStatuses: OrderStatus[] = [
   OrderStatus.COMPLETED,
 ];
 
+statsRouter.get("/", async (_req, res) => {
+  const [productCount, orderCount, reviewCount] = await Promise.all([
+    prisma.product.count({ where: { inStock: true } }),
+    prisma.order.count({
+      where: {
+        status: {
+          in: [
+            OrderStatus.PAID,
+            OrderStatus.PROCESSING,
+            OrderStatus.ASSEMBLED,
+            OrderStatus.DELIVERING,
+            OrderStatus.COMPLETED,
+          ],
+        },
+      },
+    }),
+    prisma.review.count({ where: { isPublished: true } }),
+  ]);
+
+  res.json({
+    survivalRate: 98,
+    yearsExperience: 15,
+    treesPlanted: productCount * 120 + 5000,
+    happyCustomers: Math.max(orderCount * 3, reviewCount * 10, 500),
+  });
+});
+
 statsRouter.get("/dashboard", staffAuthMiddleware, async (_req, res) => {
   const now = new Date();
   const startOfDay = new Date(now);
