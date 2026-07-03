@@ -35,11 +35,12 @@ export const FeaturedProducts = () => {
             {products.map((product, index) => (
               <ProductCard
                 key={product.id}
+                id={product.id}
                 name={product.name}
-                latinName={product.latinName}
-                height={product.height}
-                price={`от ${product.price.toLocaleString()} ₽`}
-                image={product.image}
+                sort={product.sort}
+                heightLabel={product.heightLabel}
+                price={product.price}
+                images={product.images}
                 index={index}
               />
             ))}

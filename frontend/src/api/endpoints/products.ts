@@ -1,16 +1,42 @@
 import { apiClient } from '@/api/client';
 
-export interface ProductResponse {
+export interface ProductImage {
+  id: string;
+  productId: string;
+  key: string;
+  url: string;
+  sortOrder: number;
+}
+
+export interface ProductCategory {
   id: string;
   name: string;
-  latinName: string;
-  description?: string;
-  height: string;
+}
+
+export interface ProductResponse {
+  id: string;
+  sku: string | null;
+  name: string;
+  description: string | null;
+  careGuide: string | null;
+  height: number | null;
+  heightLabel: string | null;
+  sort: string | null;
   price: number;
-  category?: string;
-  images?: string[];
-  image?: string;
-  inStock?: boolean;
+  costPrice: number | null;
+  quantity: number;
+  reserved: number;
+  inStock: boolean;
+  isHit: boolean;
+  isNew: boolean;
+  available: boolean;
+  categoryId: string | null;
+  category: ProductCategory | null;
+  salePointId: string | null;
+  salePoint: { id: string; shortName: string } | null;
+  images: ProductImage[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductFilters {

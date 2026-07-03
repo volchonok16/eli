@@ -1,52 +1,9 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { use3DTilt } from '@/shared/hooks/use3DTilt';
 import { useProducts } from './useProducts';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
-
-interface CatalogCardProps {
-  product: { id: string; name: string; height: string; price: number; image?: string };
-  index: number;
-}
-
-const CatalogCard = ({ product, index }: CatalogCardProps) => {
-  const { values, handleMouseMove, handleMouseLeave } = use3DTilt(5);
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.45, delay: index * 0.08 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: `perspective(800px) rotateX(${values.rotateX}deg) rotateY(${values.rotateY}deg) scale(${values.scale})`,
-        boxShadow: values.isHovered
-          ? `${values.shadowX}px ${values.shadowY}px 30px rgba(28, 25, 23, 0.1)`
-          : 'none',
-      }}
-      className="card group cursor-pointer transition-shadow duration-300 origin-center"
-    >
-      <div className="aspect-[4/3] bg-surface-dark flex items-center justify-center overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
-        ) : (
-          <div className="text-text-muted/20 font-serif text-lg">Eli</div>
-        )}
-      </div>
-      <div className="p-6">
-        <h3 className="font-serif text-lg text-primary mb-2 group-hover:text-accent transition-colors leading-tight">
-          {product.name}
-        </h3>
-        <p className="text-text-muted text-sm mb-3">Высота: {product.height}</p>
-        <p className="font-sans text-xl text-accent font-semibold">{formatPrice(product.price)}</p>
-      </div>
-    </motion.article>
-  );
-};
 
 const SkeletonGrid = () => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -149,7 +106,42 @@ export const CatalogPage = () => {
           {products && products.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {products.map((product, index) => (
-                <CatalogCard key={product.id} product={product} index={index} />
+                <Link key={product.id} to={`/product/${product.id}`} className="block">
+                  <motion.article
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-50px' }}
+                    transition={{ duration: 0.45, delay: index * 0.08 }}
+                    className="card group cursor-pointer h-full"
+                  >
+                    <div className="aspect-[4/3] bg-surface-dark flex items-center justify-center overflow-hidden relative">
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      {product.images?.[0]?.url ? (
+                        <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      ) : (
+                        <div className="text-text-muted/20 font-serif text-lg">Eli</div>
+                      )}
+                      {product.isNew && (
+                        <span className="absolute top-3 left-3 bg-accent text-surface text-[10px] uppercase tracking-widest px-2 py-0.5">New</span>
+                      )}
+                      {product.isHit && (
+                        <span className="absolute top-3 right-3 bg-primary text-surface text-[10px] uppercase tracking-widest px-2 py-0.5">Хит</span>
+                      )}
+                    </div>
+                    <div className="p-6">
+                      {product.sort && (
+                        <p className="text-xs text-text-muted/50 uppercase tracking-widest mb-2">{product.sort}</p>
+                      )}
+                      <h3 className="font-serif text-lg text-primary mb-2 group-hover:text-accent transition-colors leading-tight">
+                        {product.name}
+                      </h3>
+                      {product.heightLabel && (
+                        <p className="text-text-muted text-sm mb-3">{product.heightLabel} м</p>
+                      )}
+                      <p className="font-sans text-xl text-accent font-semibold">{formatPrice(product.price)}</p>
+                    </div>
+                  </motion.article>
+                </Link>
               ))}
             </div>
           )}
