@@ -1,6 +1,7 @@
-import { resolveMediaUrl } from '@/shared/utils/mediaUrl';
+import { resolveProductImage } from '@/shared/utils/mediaUrl';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useProducts } from './useProducts';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
@@ -116,8 +117,8 @@ export const CatalogPage = () => {
                   >
                     <div className="aspect-[4/3] bg-surface-dark flex items-center justify-center overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      {product.images?.[0]?.url ? (
-                        <img src={resolveMediaUrl(product.images[0].url)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      {product.images?.[0] ? (
+                        <img src={resolveProductImage(product.images[0])} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                       ) : (
                         <div className="text-text-muted/20 font-serif text-lg">Eli</div>
                       )}

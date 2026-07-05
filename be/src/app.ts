@@ -11,7 +11,8 @@ import { ordersRouter } from "./routes/orders.js";
 import { cartRouter } from "./routes/cart.js";
 import { webhooksRouter } from "./routes/webhooks.js";
 import { salePointsRouter } from "./routes/sale-points.js";
-import { filesRouter } from "./routes/files.js";
+import { registerFilesRoute } from "./routes/files.js";
+import { checkMinioConnection } from "./services/minio.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { deliveryZonesRouter } from "./routes/delivery-zones.js";
 import { bannersRouter } from "./routes/banners.js";
@@ -51,8 +52,9 @@ export function createApp() {
   );
   app.use(express.json());
 
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
+  app.get("/health", async (_req, res) => {
+    const minioOk = await checkMinioConnection();
+    res.json({ status: "ok", minio: minioOk });
   });
 
   app.use("/api/auth", authRouter);
@@ -73,7 +75,7 @@ export function createApp() {
   app.use("/api/partner-applications", partnerApplicationsRouter);
   app.use("/api/newsletter", newsletterRouter);
   app.use("/api/webhooks", webhooksRouter);
-  app.use("/api/files", filesRouter);
+  registerFilesRoute(app);
 
   app.use(
     (

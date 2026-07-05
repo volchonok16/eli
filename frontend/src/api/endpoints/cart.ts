@@ -10,7 +10,7 @@ interface BackendCartItem {
     id: string;
     name: string;
     heightLabel: string | null;
-    images: { url: string }[];
+    images: { url: string; key?: string }[];
   };
 }
 
@@ -45,7 +45,11 @@ function mapCart(data: BackendCartResponse): CartResponse {
       height: item.product.heightLabel ?? '—',
       price: item.price,
       quantity: item.quantity,
-      image: item.product.images[0]?.url ?? '',
+      image: item.product.images[0]
+        ? item.product.images[0].key
+          ? `/api/files/${item.product.images[0].key}`
+          : item.product.images[0].url
+        : '',
     })),
     total: data.totalAmount,
   };

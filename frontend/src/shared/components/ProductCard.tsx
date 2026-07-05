@@ -1,7 +1,7 @@
 import { motion, type Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { use3DTilt } from '@/shared/hooks/use3DTilt';
-import { resolveMediaUrl } from '@/shared/utils/mediaUrl';
+import { resolveProductImage } from '@/shared/utils/mediaUrl';
 import type { ProductImage } from '@/api/endpoints/products';
 
 interface ProductCardProps {
@@ -23,7 +23,7 @@ const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
 export const ProductCard = ({ id, name, sort, heightLabel, price, images, index }: ProductCardProps) => {
   const { values, handleMouseMove, handleMouseLeave } = use3DTilt(6);
-  const image = resolveMediaUrl(images?.[0]?.url);
+  const image = resolveProductImage(images?.[0]);
 
   return (
     <motion.article

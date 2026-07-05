@@ -15,11 +15,6 @@ interface BackendCartItem {
   };
 }
 
-interface BackendCartResponse {
-  items: BackendCartItem[];
-  totalAmount: number;
-}
-
 function mapCartItem(item: BackendCartItem) {
   return {
     id: item.id,

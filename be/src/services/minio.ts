@@ -29,7 +29,7 @@ async function ensureBucket(): Promise<void> {
 }
 
 export function getImagePublicUrl(key: string): string {
-  return `/api/files/${key.split("/").map(encodeURIComponent).join("/")}`;
+  return `/api/files/${key}`;
 }
 
 export async function uploadImage(
@@ -96,4 +96,14 @@ export async function getProductImageStat(key: string) {
 
 export async function initMinio(): Promise<void> {
   await ensureBucket();
+}
+
+export async function checkMinioConnection(): Promise<boolean> {
+  try {
+    await ensureBucket();
+    return true;
+  } catch (error) {
+    console.error("MinIO недоступен:", error);
+    return false;
+  }
 }

@@ -1,3 +1,13 @@
+export function resolveProductImage(
+  image?: { url?: string; key?: string } | null
+): string {
+  if (!image) return "";
+  if (image.key) {
+    return `/api/files/${image.key}`;
+  }
+  return resolveMediaUrl(image.url);
+}
+
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return "";
 

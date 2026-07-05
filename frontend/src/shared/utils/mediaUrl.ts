@@ -1,3 +1,14 @@
+/** URL картинки — всегда из key, если он есть (надёжнее, чем url из БД) */
+export function resolveProductImage(
+  image?: { url?: string; key?: string } | null
+): string {
+  if (!image) return "";
+  if (image.key) {
+    return `/api/files/${image.key}`;
+  }
+  return resolveMediaUrl(image.url);
+}
+
 /** Нормализует URL медиа: относительный /api/files/... или старый absolute localhost:3000 */
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return "";

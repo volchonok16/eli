@@ -1,10 +1,8 @@
-import { Router } from "express";
+import type { Express, Request, Response } from "express";
 import {
   getProductImage,
   getProductImageStat,
 } from "../services/minio.js";
-
-export const filesRouter = Router();
 
 function guessContentType(key: string): string {
   const ext = key.split(".").pop()?.toLowerCase();
@@ -19,15 +17,25 @@ function guessContentType(key: string): string {
   return types[ext ?? ""] ?? "application/octet-stream";
 }
 
-function extractKey(pathParam: string | string[] | undefined): string {
-  if (Array.isArray(pathParam)) {
-    return pathParam.join("/");
+function extractFileKey(req: Request): string {
+  const param = req.params.filepath;
+  if (Array.isArray(param)) {
+    return param.map(decodeURIComponent).join("/");
   }
-  return pathParam ?? "";
+  if (typeof param === "string" && param.length > 0) {
+    return decodeURIComponent(param);
+  }
+
+  const prefix = "/api/files/";
+  if (req.originalUrl.startsWith(prefix)) {
+    return decodeURIComponent(req.originalUrl.slice(prefix.length).split("?")[0]);
+  }
+
+  return "";
 }
 
-filesRouter.get("/{*path}", async (req, res) => {
-  const key = extractKey(req.params.path);
+async function serveFile(req: Request, res: Response): Promise<void> {
+  const key = extractFileKey(req);
 
   if (!key) {
     res.status(400).json({ error: "Не указан файл" });
@@ -60,4 +68,10 @@ filesRouter.get("/{*path}", async (req, res) => {
     console.error("File not found:", key, error);
     res.status(404).json({ error: "Файл не найден" });
   }
-});
+}
+
+export function registerFilesRoute(app: Express): void {
+  app.get("/api/files/*filepath", (req, res) => {
+    void serveFile(req, res);
+  });
+}
