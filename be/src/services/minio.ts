@@ -28,9 +28,8 @@ async function ensureBucket(): Promise<void> {
   bucketReady = true;
 }
 
-/** Относительный URL — картинки идут через тот же origin (Vite proxy / nginx) */
 export function getImagePublicUrl(key: string): string {
-  return `/api/files/${key}`;
+  return `/api/files/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 export async function uploadImage(

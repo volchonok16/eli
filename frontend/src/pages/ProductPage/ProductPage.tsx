@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useProduct } from './hooks/useProduct';
 import { useAddToCart } from '@/pages/CartPage/useCart';
+import { resolveMediaUrl } from '@/shared/utils/mediaUrl';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -48,7 +49,7 @@ export const ProductPage = () => {
   }
 
   const images = product.images?.length ? [...product.images].sort((a, b) => a.sortOrder - b.sortOrder) : [];
-  const mainImage = images[activeImage]?.url;
+  const mainImage = resolveMediaUrl(images[activeImage]?.url);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -100,7 +101,7 @@ export const ProductPage = () => {
                       idx === activeImage ? 'border-accent' : 'border-surface-muted hover:border-primary/30'
                     }`}
                   >
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    <img src={resolveMediaUrl(img.url)} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

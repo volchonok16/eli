@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Product } from "@/api/types";
 import { formatRub } from "@/shared/utils/formatDate";
+import { resolveMediaUrl } from "@/shared/utils/mediaUrl";
 
 interface ProductTableProps {
   products: Product[];
@@ -28,7 +29,7 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
             <td>
               {product.images[0] ? (
                 <img
-                  src={product.images[0].url}
+                  src={resolveMediaUrl(product.images[0].url)}
                   alt=""
                   className="product-thumb"
                 />
