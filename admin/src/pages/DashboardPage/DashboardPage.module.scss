@@ -2,6 +2,12 @@
   grid-column: span 2;
 }
 
+.statCardIcon {
+  font-size: 28px;
+  line-height: 1;
+  margin-right: 4px;
+}
+
 .tableCard {
   flex: 1;
 }
@@ -10,6 +16,7 @@
   font-family: "Playfair Display", serif;
   font-size: 18px;
   margin-top: 0;
+  margin-bottom: 16px;
 }
 
 .dashboardSection {

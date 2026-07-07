@@ -7,7 +7,7 @@ export const Footer = () => (
         <div>
           <h3 className="font-display text-xl font-bold italic mb-3 sm:mb-4">Eli</h3>
           <p className="text-text-inverse/70 text-sm leading-relaxed max-w-xs">
-            Элитные ели с доставкой по всей стране. Качество, проверенное временем.
+            Живые новогодние ёлки с доставкой по Москве и области. Праздник начинается здесь.
           </p>
         </div>
 

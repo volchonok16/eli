@@ -3,11 +3,21 @@ import { Link, useParams } from "react-router-dom";
 import { useProductForm } from "./hooks/useProductForm";
 import { ProductFormFields } from "./ui/ProductFormFields";
 import { ProductImageManager } from "./ui/ProductImageManager";
+import { SkeletonForm } from "@/shared/components";
 import s from "./ProductsPage.module.scss";
 
 export function ProductFormPage() {
   const { id } = useParams();
   const ctx = useProductForm(id);
+
+  if (ctx.loading) {
+    return (
+      <div className="page">
+        <div className="header"><h1>Загрузка...</h1></div>
+        <div className="card"><SkeletonForm fields={8} /></div>
+      </div>
+    );
+  }
 
   function setField(name: string, value: string | boolean) {
     ctx.setForm((prev) => ({ ...prev, [name]: value }));
@@ -16,10 +26,6 @@ export function ProductFormPage() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     ctx.save();
-  }
-
-  if (ctx.loading) {
-    return <div className="page"><p>Загрузка...</p></div>;
   }
 
   return (
@@ -31,34 +37,39 @@ export function ProductFormPage() {
 
       <div className="card">
         <form onSubmit={handleSubmit}>
-          <ProductFormFields
-            form={ctx.form}
-            setField={setField}
-            categories={ctx.categories}
-            salePoints={ctx.salePoints}
-          />
+          <ProductFormFields form={ctx.form} setField={setField} categories={ctx.categories} salePoints={ctx.salePoints} />
 
           {ctx.error && <p className="error">{ctx.error}</p>}
 
-          <button type="submit" className="btn btn-primary" disabled={ctx.saving}>
-            {ctx.saving ? "Сохранение..." : "Сохранить"}
+          <button type="submit" className="btn btn-primary" disabled={ctx.saving} style={{ marginTop: 8 }}>
+            {ctx.saving ? "Сохранение..." : ctx.isEdit ? "Сохранить изменения" : "Создать товар"}
           </button>
         </form>
 
-        {ctx.isEdit && id && (
-          <div className={s.imageSection}>
-            <h3 className={s.imageSectionTitle}>Изображения</h3>
-            <ProductImageManager
-              productId={id}
-              images={ctx.images}
-              onUpload={ctx.handleImageUpload}
-              onDelete={ctx.handleImageDelete}
-              onMove={ctx.handleImageMove}
-            />
-          </div>
-        )}
-
-        {!ctx.isEdit && <p className={s.formHint}>После создания товара можно будет загрузить изображения.</p>}
+        <div className={s.imageSection}>
+          <h3 className={s.imageSectionTitle}>Изображения</h3>
+          {ctx.isEdit ? (
+            <ProductImageManager productId={id!} images={ctx.images} onUpload={ctx.handleImageUpload} onDelete={ctx.handleImageDelete} onMove={ctx.handleImageMove} />
+          ) : (
+            <div>
+              <p className="form-hint" style={{ marginBottom: 12 }}>Загрузите фото товара (до 10 файлов). Первое станет главным.</p>
+              <input type="file" accept="image/*" multiple onChange={(e) => { if (e.target.files?.length) ctx.handleFilesSelected(e.target.files); e.target.value = ""; }} />
+              {ctx.pendingFiles.length > 0 && (
+                <div className="image-grid">
+                  {ctx.pendingFiles.map((file, index) => (
+                    <div key={index} className="image-item">
+                      <span className="image-order">{index + 1}</span>
+                      <img src={URL.createObjectURL(file)} alt="" />
+                      <div className="image-actions">
+                        <button type="button" className="image-delete" onClick={() => ctx.handlePendingFileRemove(index)} title="Удалить">×</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

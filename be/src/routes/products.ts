@@ -169,7 +169,7 @@ productsRouter.get("/:id", async (req, res) => {
   res.json(serializeProduct(product));
 });
 
-productsRouter.post("/", adminAuthMiddleware, async (req, res) => {
+productsRouter.post("/", adminAuthMiddleware, upload.array("images", 10), async (req, res) => {
   const parsed = productSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -205,10 +205,31 @@ productsRouter.post("/", adminAuthMiddleware, async (req, res) => {
       categoryId: data.categoryId ?? null,
       salePointId: data.salePointId ?? null,
     },
+  });
+
+  const files = req.files as Express.Multer.File[];
+  if (files?.length) {
+    await Promise.all(
+      files.map(async (file, index) => {
+        const { key } = await uploadProductImage(file);
+        await prisma.productImage.create({
+          data: {
+            productId: product.id,
+            key,
+            url: getImagePublicUrl(key),
+            sortOrder: index,
+          },
+        });
+      })
+    );
+  }
+
+  const created = await prisma.product.findUniqueOrThrow({
+    where: { id: product.id },
     include: productInclude,
   });
 
-  res.status(201).json(serializeProduct(product));
+  res.status(201).json(serializeProduct(created));
 });
 
 productsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {

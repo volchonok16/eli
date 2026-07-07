@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProduct, createProduct, updateProduct } from "@/api/endpoints/products";
+import { getProduct, createProduct, createProductWithFiles, updateProduct } from "@/api/endpoints/products";
 import { getCategories } from "@/api/endpoints/categories";
 import { getSalePoints } from "@/api/endpoints/sale-points";
 import type { Category, SalePoint, ProductImage } from "@/api/types";
@@ -43,6 +43,7 @@ export function useProductForm(id: string | undefined) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
   const [images, setImages] = useState<ProductImage[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -107,6 +108,15 @@ export function useProductForm(id: string | undefined) {
       if (isEdit && id) {
         await updateProduct(id, data);
         navigate("/products");
+      } else if (pendingFiles.length > 0) {
+        const fdData: Record<string, string> = {};
+        for (const [key, value] of Object.entries(data)) {
+          if (value != null && value !== "") {
+            fdData[key] = String(value);
+          }
+        }
+        const created = await createProductWithFiles(fdData, pendingFiles as unknown as FileList);
+        navigate(`/products/${created.id}`);
       } else {
         const created = await createProduct(data);
         navigate(`/products/${created.id}`);
@@ -116,7 +126,7 @@ export function useProductForm(id: string | undefined) {
     } finally {
       setSaving(false);
     }
-  }, [buildData, isEdit, id, navigate]);
+  }, [buildData, isEdit, id, navigate, pendingFiles]);
 
   const handleImageUpload = useCallback(async (files: FileList) => {
     if (!id) return;
@@ -129,6 +139,14 @@ export function useProductForm(id: string | undefined) {
       alert(e instanceof Error ? e.message : "Ошибка загрузки");
     }
   }, [id]);
+
+  const handleFilesSelected = useCallback((files: FileList) => {
+    setPendingFiles((prev) => [...prev, ...Array.from(files)].slice(0, 10));
+  }, []);
+
+  const handlePendingFileRemove = useCallback((index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleImageDelete = useCallback(async (imageId: string) => {
     if (!id) return;
@@ -156,8 +174,9 @@ export function useProductForm(id: string | undefined) {
   }, [id, images]);
 
   return {
-    form, setForm, categories, salePoints, images,
+    form, setForm, categories, salePoints, images, pendingFiles,
     loading, saving, error, isEdit,
     save, handleImageUpload, handleImageDelete, handleImageMove,
+    handleFilesSelected, handlePendingFileRemove,
   };
 }

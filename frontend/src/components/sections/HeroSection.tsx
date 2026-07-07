@@ -47,7 +47,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <p className="text-xs sm:text-sm text-text-muted/70 uppercase tracking-[0.25em] mb-4 sm:mb-6 font-medium">
-              Коллекция 2026
+              Коллекция зима 2026–2027
             </p>
           </motion.div>
 
@@ -67,7 +67,7 @@ export const HeroSection = () => {
               transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
               <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
-                ели
+                ёлки
               </span>
             </motion.span>
             <motion.span
@@ -76,7 +76,7 @@ export const HeroSection = () => {
               transition={{ duration: 0.7, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
               <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-accent italic leading-[0.92] tracking-tight">
-                для вашего сада
+                для вашего праздника
               </span>
             </motion.span>
           </h1>
@@ -94,9 +94,9 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 1.3, ease: 'easeOut' }}
             className="text-sm sm:text-lg text-text-muted/90 mb-6 sm:mb-10 max-w-md leading-relaxed"
           >
-            Премиальные хвойные деревья из европейских питомников.
+            Свежайшие новогодние ёлки с доставкой по Москве и области.
             <br className="hidden sm:block" />
-            Персональный подбор, бережная доставка, гарантия качества.
+            Выберите размер, а об остальном позаботимся мы.
           </motion.p>
 
           <motion.div
@@ -112,10 +112,10 @@ export const HeroSection = () => {
               Смотреть каталог
             </Link>
             <Link
-              to="/about"
+              to="/bases"
               className="text-sm sm:text-base text-text-muted hover:text-primary transition-colors border-b border-transparent hover:border-primary/30 pb-1"
             >
-              О компании
+              Наши базары
             </Link>
           </motion.div>
 
@@ -126,9 +126,9 @@ export const HeroSection = () => {
             className="flex items-center gap-6 sm:gap-12 mt-10 sm:mt-16"
           >
             {[
-              ['500+', 'довольных клиентов'],
-              ['15 лет', 'опыта и экспертизы'],
-              ['98%', 'приживаемость'],
+              ['2000+', 'ёлок каждый сезон'],
+              ['15 лет', 'создаём праздник'],
+              ['24 часа', 'доставка'],
             ].map(([value, label]) => (
               <div key={label}>
                 <p className="font-display text-lg sm:text-2xl text-primary">{value}</p>

@@ -6,10 +6,10 @@ export const StatsBanner = () => {
 
   const items = stats
     ? [
-        { value: stats.survivalRate, maxValue: 100, suffix: '%', label: 'Приживаемость' },
-        { value: stats.yearsExperience, maxValue: stats.yearsExperience + 5, suffix: '+', label: 'Лет опыта' },
-        { value: stats.treesPlanted, maxValue: stats.treesPlanted, suffix: '+', label: 'Елей посажено' },
-        { value: stats.happyCustomers, maxValue: stats.happyCustomers, suffix: '+', label: 'Довольных клиентов' },
+        { value: stats.survivalRate, maxValue: 100, suffix: '%', label: 'Стойкость' },
+        { value: stats.yearsExperience, maxValue: stats.yearsExperience + 5, suffix: '+', label: 'Лет на рынке' },
+        { value: stats.treesPlanted, maxValue: stats.treesPlanted, suffix: '+', label: 'Ёлок продано' },
+        { value: stats.happyCustomers, maxValue: stats.happyCustomers, suffix: '+', label: 'Счастливых семей' },
       ]
     : undefined;
 
@@ -23,7 +23,7 @@ export const StatsBanner = () => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           title="Eli в цифрах"
-          subtitle="15 лет создаём красоту, которой доверяют"
+          subtitle="15 лет создаём новогоднее настроение"
           light
           display
         />

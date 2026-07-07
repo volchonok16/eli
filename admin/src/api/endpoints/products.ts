@@ -32,6 +32,18 @@ export function createProduct(data: {
   });
 }
 
+export function createProductWithFiles(data: Record<string, string>, files: FileList) {
+  const fd = new FormData();
+  for (const [key, value] of Object.entries(data)) {
+    fd.append(key, value);
+  }
+  Array.from(files).forEach((f) => fd.append("images", f));
+  return apiRequest<Product>("/products", {
+    method: "POST",
+    body: fd,
+  });
+}
+
 export function updateProduct(
   id: string,
   data: {

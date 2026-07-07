@@ -273,6 +273,9 @@ button {
   border-radius: $radius-lg;
   padding: 24px;
   box-shadow: $shadow-sm;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 
   &-large {
     grid-column: span 2;
@@ -540,6 +543,230 @@ button {
   &:hover {
     background: $color-danger-hover;
   }
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+}
+
+.toast {
+  padding: 14px 20px;
+  border-radius: $radius;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: $shadow-lg;
+  animation: toastIn 0.3s ease-out;
+  pointer-events: all;
+}
+
+.toast-success {
+  background: $color-success-bg;
+  color: $color-success-text;
+  border: 1px solid rgba($color-success-text, 0.12);
+}
+
+.toast-error {
+  background: $color-danger-bg;
+  color: $color-danger-text;
+  border: 1px solid rgba($color-danger-text, 0.12);
+}
+
+.toast-info {
+  background: rgba($color-accent, 0.08);
+  color: $color-accent-dark;
+  border: 1px solid rgba($color-accent, 0.15);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 9, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.modal {
+  background: $color-surface;
+  border-radius: $radius-lg;
+  padding: 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: $shadow-lg;
+  animation: scaleIn 0.2s ease-out;
+}
+
+.modal-title {
+  font-family: $font-serif;
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: $color-primary;
+}
+
+.modal-message {
+  color: $color-text-muted;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: $color-surface-muted;
+  border-radius: $radius-sm;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-header {
+  margin-bottom: 16px;
+}
+
+.skeleton-row {
+  flex-direction: row;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid $color-surface-muted;
+}
+
+.skeleton-cell {
+  flex: 1;
+}
+
+.skeleton-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+@keyframes shimmer {
+  0% { background: $color-surface-muted; }
+  50% { background: rgba($color-surface-muted, 0.7); }
+  100% { background: $color-surface-muted; }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-state-title {
+  font-family: $font-serif;
+  font-size: 18px;
+  color: $color-text;
+  margin-bottom: 8px;
+}
+
+.empty-state-desc {
+  color: $color-text-muted;
+  font-size: 14px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.form-section {
+  margin-bottom: 28px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-section-title {
+  font-family: $font-serif;
+  font-size: 16px;
+  color: $color-primary;
+  margin-bottom: 4px;
+}
+
+.form-section-desc {
+  font-size: 13px;
+  color: $color-text-muted;
+  margin-bottom: 16px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: $color-text-muted;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.field-error {
+  font-size: 12px;
+  color: $color-danger-hover;
+  margin-top: 4px;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-group-addon {
+  font-size: 14px;
+  color: $color-text-muted;
+  white-space: nowrap;
+}
+
+.form-divider {
+  border: none;
+  border-top: 1px solid $color-surface-muted;
+  margin: 24px 0;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeSlideIn 0.3s ease-out;
 }
 
 @media (max-width: 640px) {

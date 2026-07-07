@@ -2,16 +2,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 import { useCreateOrder } from './hooks/useCheckout';
+import { useCart } from '@/pages/CartPage/useCart';
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const createOrder = useCreateOrder();
+  const { data: cart } = useCart();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [delivery, setDelivery] = useState<'pickup' | 'courier'>('pickup');
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
+
+  const cartItems = cart?.items ?? [];
+  const cartTotal = cart?.total ?? 0;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -22,9 +27,14 @@ export const CheckoutPage = () => {
       return;
     }
 
+    if (cartItems.length === 0) {
+      setError('Корзина пуста. Добавьте товары перед оформлением заказа.');
+      return;
+    }
+
     createOrder.mutate(
       {
-        items: [],
+        items: cartItems.map((item) => ({ productId: item.productId, quantity: item.quantity })),
         customerName: name,
         customerPhone: phone,
         customerEmail: email,
@@ -145,12 +155,22 @@ export const CheckoutPage = () => {
             <div className="lg:col-span-2">
               <div className="card p-6 sticky top-24">
                 <h2 className="font-serif text-xl text-primary mb-6">Ваш заказ</h2>
-                <p className="text-text-muted text-sm mb-4">
-                  Товары из корзины будут добавлены к заказу при оформлении
-                </p>
-                <div className="border-t border-surface-muted pt-4 mb-6">
-                  <p className="text-text-muted/60 text-xs">Детали заказа будут уточнены после подтверждения</p>
-                </div>
+                {cartItems.length > 0 ? (
+                  <div className="space-y-3 text-sm mb-4">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex justify-between text-text-muted">
+                        <span>{item.name} × {item.quantity}</span>
+                        <span>{(item.price * item.quantity).toLocaleString()} ₽</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-surface-muted pt-4 mt-4 flex justify-between font-serif text-lg text-primary">
+                      <span>Итого</span>
+                      <span>{cartTotal.toLocaleString()} ₽</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-text-muted text-sm mb-4">Корзина пуста</p>
+                )}
                 <button
                   type="submit"
                   disabled={createOrder.isPending}

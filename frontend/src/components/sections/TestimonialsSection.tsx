@@ -5,7 +5,7 @@ export const TestimonialsSection = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
         title="Что говорят клиенты"
-        subtitle="Нам доверяют сотни клиентов — от частных садоводов до профессиональных ландшафтных дизайнеров"
+        subtitle="Тысячи семей и компаний выбирают нас для создания новогодней атмосферы"
         display
       />
 

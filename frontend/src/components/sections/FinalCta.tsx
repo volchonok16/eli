@@ -10,8 +10,8 @@ export const FinalCta = () => (
 
     <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
-        title="Готовы выбрать свою ель?"
-        subtitle="Ознакомьтесь с полным каталогом и найдите идеальное дерево для вашего ландшафта"
+        title="Готовы выбрать свою ёлку?"
+        subtitle="Посмотрите каталог и найдите идеальное дерево для вашего праздника"
         light
         display
       />

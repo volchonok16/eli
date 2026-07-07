@@ -40,9 +40,9 @@ export const CatalogPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Каталог елей</h1>
+            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Каталог ёлок</h1>
             <p className="text-text-muted text-lg max-w-xl">
-              Коллекция премиальных хвойных деревьев для вашего ландшафта
+              Живые новогодние ёлки для дома, офиса и загородного дома
             </p>
           </motion.div>
         </div>
