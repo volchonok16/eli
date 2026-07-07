@@ -32,7 +32,7 @@ export const StickyShowcase = () => {
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "featured-slides"],
-    queryFn: () => productsApi.getAll({ limit: 6 }),
+    queryFn: () => productsApi.getAll({ sort: "popularity" }),
     staleTime: 10 * 60 * 1000,
   });
 

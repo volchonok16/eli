@@ -11,6 +11,6 @@ export const useProducts = (filters?: ProductFilters) =>
 export const useFeaturedProducts = () =>
   useQuery({
     queryKey: ['products', 'featured'],
-    queryFn: () => productsApi.getAll({ limit: 4 }),
+    queryFn: () => productsApi.getAll({}).then((data) => data.slice(0, 4)),
     staleTime: 10 * 60 * 1000,
   });
