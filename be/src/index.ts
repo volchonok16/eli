@@ -1,7 +1,7 @@
 import { createApp } from "./app.js";
 import { config, assertProductionSecrets } from "./config.js";
 import { prisma } from "./db/prisma.js";
-import { initMinio } from "./services/minio.js";
+import { initMinio, checkMinioConnection } from "./services/minio.js";
 import { startOrderExpiryScheduler } from "./services/reservation.js";
 
 async function main() {
@@ -9,6 +9,12 @@ async function main() {
 
   await prisma.$connect();
   await initMinio();
+  const minioOk = await checkMinioConnection();
+  if (!minioOk) {
+    console.warn(
+      "⚠ MinIO недоступен — картинки не будут открываться. Запустите: docker compose up -d minio"
+    );
+  }
   startOrderExpiryScheduler();
 
   const app = createApp();

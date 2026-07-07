@@ -1,4 +1,5 @@
 import { type ProductImage } from "@/api/types";
+import { resolveProductImage } from "@/shared/utils/mediaUrl";
 
 interface ProductImageManagerProps {
   productId: string;
@@ -33,7 +34,7 @@ export function ProductImageManager({
         {images.map((img, index) => (
           <div key={img.id} className="image-item">
             <span className="image-order">{index + 1}</span>
-            <img src={img.url} alt="" />
+            <img src={resolveProductImage(img)} alt="" />
             <div className="image-actions">
               <button
                 type="button"

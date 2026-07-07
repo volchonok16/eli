@@ -53,8 +53,9 @@ const productInclude = {
 productsRouter.get("/", async (req, res) => {
   const where: Prisma.ProductWhereInput = {};
 
-  if (req.query.categoryId) {
-    where.categoryId = String(req.query.categoryId);
+  const categoryId = req.query.categoryId ?? req.query.category;
+  if (categoryId) {
+    where.categoryId = String(categoryId);
   }
   if (req.query.salePointId) {
     where.salePointId = String(req.query.salePointId);
@@ -95,13 +96,18 @@ productsRouter.get("/", async (req, res) => {
   let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
-  if (sort === "popularity") orderBy = { isHit: "desc" };
+  if (sort === "popularity" || sort === "popular") orderBy = { isHit: "desc" };
 
-  if (!req.query.page && !req.query.limit) {
+  if (!req.query.page) {
+    const take = req.query.limit
+      ? Math.min(100, Math.max(1, Number(req.query.limit)))
+      : undefined;
+
     const products = await prisma.product.findMany({
       where,
       include: productInclude,
       orderBy,
+      take,
     });
     res.json(products.map(serializeProduct));
     return;

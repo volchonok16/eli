@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useCart, useUpdateCartQuantity, useRemoveFromCart, useCheckout } from './useCart';
+import { useCart, useUpdateCartQuantity, useRemoveFromCart } from './useCart';
 
 const formatPrice = (v: number) => `${v.toLocaleString()} ₽`;
 
@@ -8,7 +8,6 @@ export const CartPage = () => {
   const { data: cart, isLoading } = useCart();
   const updateQuantity = useUpdateCartQuantity();
   const removeItem = useRemoveFromCart();
-  const checkout = useCheckout();
 
   const items = cart?.items ?? [];
   const total = cart?.total ?? 0;
@@ -56,7 +55,7 @@ export const CartPage = () => {
                       aria-label="Уменьшить количество"
                       onClick={() => {
                         if (item.quantity > 1) {
-                          updateQuantity.mutate({ itemId: item.id, quantity: item.quantity - 1 });
+                          updateQuantity.mutate({ productId: item.productId, quantity: item.quantity - 1 });
                         }
                       }}
                       disabled={item.quantity <= 1}
@@ -67,7 +66,7 @@ export const CartPage = () => {
                     <button
                       className="w-8 h-8 border border-surface-muted flex items-center justify-center hover:bg-surface-dark transition-colors"
                       aria-label="Увеличить количество"
-                      onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                      onClick={() => updateQuantity.mutate({ productId: item.productId, quantity: item.quantity + 1 })}
                     >
                       +
                     </button>
@@ -77,7 +76,7 @@ export const CartPage = () => {
                   <p className="font-sans text-xl text-primary font-semibold">{formatPrice(item.price)}</p>
                   <button
                     className="text-sm text-text-muted mt-2 hover:text-error transition-colors disabled:opacity-30"
-                    onClick={() => removeItem.mutate(item.id)}
+                    onClick={() => removeItem.mutate(item.productId)}
                     disabled={removeItem.isPending}
                   >
                     {removeItem.isPending ? 'Удаление...' : 'Удалить'}
@@ -103,23 +102,9 @@ export const CartPage = () => {
                 <span>Сумма</span>
                 <span>{formatPrice(total)}</span>
               </div>
-              <button
-                className="btn-primary w-full text-center"
-                onClick={() => checkout.mutate()}
-                disabled={checkout.isPending}
-              >
-                {checkout.isPending ? 'Оформление...' : 'Оформить заказ'}
-              </button>
-              {checkout.isSuccess && (
-                <p className="text-sm text-accent mt-3 text-center">
-                  Заказ оформлен! Мы свяжемся с вами.
-                </p>
-              )}
-              {checkout.isError && (
-                <p className="text-sm text-error mt-3 text-center">
-                  Ошибка при оформлении. Попробуйте снова.
-                </p>
-              )}
+              <Link to="/checkout" className="btn-primary w-full text-center block">
+                Оформить заказ
+              </Link>
             </div>
           </div>
         </div>
