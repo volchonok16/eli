@@ -62,20 +62,20 @@ async function assertSlugAvailable(slug: string, excludeId?: string) {
 }
 
 async function wouldCreateCycle(categoryId: string, parentId: string): Promise<boolean> {
-  let current: string | null = parentId;
+  const links = await prisma.category.findMany({
+    select: { id: true, parentId: true },
+  });
+  const parentById = new Map<string, string | null>(
+    links.map((item) => [item.id, item.parentId])
+  );
+
   const seen = new Set<string>();
+  let current: string | null = parentId;
 
   while (current) {
-    if (current === categoryId) return true;
-    if (seen.has(current)) return true;
+    if (current === categoryId || seen.has(current)) return true;
     seen.add(current);
-
-    const currentId = current;
-    const node: { parentId: string | null } | null = await prisma.category.findUnique({
-      where: { id: currentId },
-      select: { parentId: true },
-    });
-    current = node?.parentId ?? null;
+    current = parentById.get(current) ?? null;
   }
 
   return false;
