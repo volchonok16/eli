@@ -70,8 +70,9 @@ async function wouldCreateCycle(categoryId: string, parentId: string): Promise<b
     if (seen.has(current)) return true;
     seen.add(current);
 
-    const node = await prisma.category.findUnique({
-      where: { id: current },
+    const currentId = current;
+    const node: { parentId: string | null } | null = await prisma.category.findUnique({
+      where: { id: currentId },
       select: { parentId: true },
     });
     current = node?.parentId ?? null;
