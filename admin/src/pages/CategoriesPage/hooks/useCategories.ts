@@ -10,22 +10,22 @@ export function useCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
+  const fetch = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       setData(await getCategories());
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 
   const remove = useCallback(async (id: string) => {
     await deleteCategory(id);
-    setData((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+    await fetch({ silent: true });
+  }, [fetch]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

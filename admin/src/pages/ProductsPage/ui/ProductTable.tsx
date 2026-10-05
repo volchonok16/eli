@@ -15,6 +15,7 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
         <tr>
           <th>Фото</th>
           <th>Название</th>
+          <th>Категория</th>
           <th>Цена</th>
           <th>Кол-во</th>
           <th>Наличие</th>
@@ -40,6 +41,7 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
             <td>
               <Link to={`/products/${product.id}`}>{product.name}</Link>
             </td>
+            <td>{product.category?.name ?? "—"}</td>
             <td>{formatRub(product.price)}</td>
             <td>{product.quantity}</td>
             <td>

@@ -1,9 +1,15 @@
 import { Router } from "express";
 import { z } from "zod";
-import { prisma } from "../db/prisma.js";
 import { adminAuthMiddleware } from "../middleware/auth.js";
-import { serializeCategory } from "../utils/serializers.js";
 import { paramId } from "../utils/params.js";
+import {
+  CategoryServiceError,
+  createCategory,
+  deleteCategory,
+  getCategory,
+  listCategoryTree,
+  updateCategory,
+} from "../services/categories.js";
 
 export const categoriesRouter = Router();
 
@@ -14,123 +20,64 @@ const categorySchema = z.object({
   sortOrder: z.coerce.number().int().optional(),
 });
 
-async function buildCategoryTree() {
-  const categories = await prisma.category.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: { parent: true },
-  });
-
-  const byParent = new Map<string | null, typeof categories>();
-  for (const cat of categories) {
-    const key = cat.parentId;
-    const list = byParent.get(key) ?? [];
-    list.push(cat);
-    byParent.set(key, list);
+function handleCategoryError(res: { status: (code: number) => { json: (body: unknown) => void } }, error: unknown) {
+  if (error instanceof CategoryServiceError) {
+    res.status(error.status).json({ error: error.message });
+    return true;
   }
-
-  function attachChildren(parentId: string | null): ReturnType<typeof serializeCategory>[] {
-    return (byParent.get(parentId) ?? []).map((cat) => ({
-      ...serializeCategory(cat),
-      children: attachChildren(cat.id),
-    }));
-  }
-
-  return attachChildren(null);
+  return false;
 }
 
 categoriesRouter.get("/", async (_req, res) => {
-  res.json(await buildCategoryTree());
+  res.json(await listCategoryTree());
 });
 
 categoriesRouter.get("/:id", async (req, res) => {
-  const id = paramId(req.params.id);
-  const category = await prisma.category.findUnique({
-    where: { id },
-    include: {
-      parent: true,
-      children: { orderBy: { sortOrder: "asc" } },
-    },
-  });
-
-  if (!category) {
-    res.status(404).json({ error: "Категория не найдена" });
-    return;
+  try {
+    res.json(await getCategory(paramId(req.params.id)));
+  } catch (error) {
+    if (handleCategoryError(res, error)) return;
+    throw error;
   }
-
-  res.json(serializeCategory(category));
 });
 
 categoriesRouter.post("/", adminAuthMiddleware, async (req, res) => {
   const parsed = categorySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Некорректные данные" });
     return;
   }
 
-  if (parsed.data.parentId) {
-    const parent = await prisma.category.findUnique({
-      where: { id: parsed.data.parentId },
-    });
-    if (!parent) {
-      res.status(400).json({ error: "Родительская категория не найдена" });
-      return;
-    }
+  try {
+    const category = await createCategory(parsed.data);
+    res.status(201).json(category);
+  } catch (error) {
+    if (handleCategoryError(res, error)) return;
+    throw error;
   }
-
-  const category = await prisma.category.create({
-    data: {
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      parentId: parsed.data.parentId ?? null,
-      sortOrder: parsed.data.sortOrder ?? 0,
-    },
-    include: { parent: true, children: true },
-  });
-
-  res.status(201).json(serializeCategory(category));
 });
 
 categoriesRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
-  const id = paramId(req.params.id);
   const parsed = categorySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Некорректные данные" });
     return;
   }
 
-  const existing = await prisma.category.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Категория не найдена" });
-    return;
+  try {
+    res.json(await updateCategory(paramId(req.params.id), parsed.data));
+  } catch (error) {
+    if (handleCategoryError(res, error)) return;
+    throw error;
   }
-
-  if (parsed.data.parentId === id) {
-    res.status(400).json({ error: "Категория не может быть родителем самой себе" });
-    return;
-  }
-
-  const category = await prisma.category.update({
-    where: { id },
-    data: {
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      parentId: parsed.data.parentId ?? null,
-      sortOrder: parsed.data.sortOrder ?? existing.sortOrder,
-    },
-    include: { parent: true, children: true },
-  });
-
-  res.json(serializeCategory(category));
 });
 
 categoriesRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
-  const id = paramId(req.params.id);
-  const existing = await prisma.category.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Категория не найдена" });
-    return;
+  try {
+    await deleteCategory(paramId(req.params.id));
+    res.status(204).send();
+  } catch (error) {
+    if (handleCategoryError(res, error)) return;
+    throw error;
   }
-
-  await prisma.category.delete({ where: { id } });
-  res.status(204).send();
 });

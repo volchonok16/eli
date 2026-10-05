@@ -1,7 +1,8 @@
 import { resolveProductImage } from '@/shared/utils/mediaUrl';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { flattenCategories, useCategories } from './useCategories';
 import { useProducts } from './useProducts';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
@@ -23,11 +24,21 @@ const SkeletonGrid = () => (
 
 export const CatalogPage = () => {
   const [sort, setSort] = useState<string>('popular');
-  const [category, setCategory] = useState<string>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const category = searchParams.get('category') ?? '';
+  const { data: categoryTree } = useCategories();
+  const categories = flattenCategories(categoryTree ?? []);
   const { data: products, isLoading, isError } = useProducts({
     category: category || undefined,
     ...(sort !== 'popular' && { sort }),
   });
+
+  const setCategory = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set('category', value);
+    else next.delete('category');
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-surface">
@@ -51,23 +62,18 @@ export const CatalogPage = () => {
 
       <div className="border-b border-surface-muted bg-surface sticky top-[65px] z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            {[
-              { value: '', label: 'Все' },
-              { value: 'spruce', label: 'Ели' },
-              { value: 'fir', label: 'Пихты' },
-              { value: 'pine', label: 'Сосны' },
-            ].map((c) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {[{ slug: '', name: 'Все' }, ...categories].map((item) => (
               <button
-                key={c.value}
-                onClick={() => setCategory(c.value)}
+                key={item.slug || 'all'}
+                onClick={() => setCategory(item.slug)}
                 className={`text-xs sm:text-sm px-3 py-1.5 transition-colors ${
-                  category === c.value
+                  category === item.slug
                     ? 'bg-primary text-surface'
                     : 'text-text-muted hover:text-primary'
                 }`}
               >
-                {c.label}
+                {item.name}
               </button>
             ))}
           </div>

@@ -51,7 +51,7 @@ export interface Product {
   isNew: boolean;
   available: boolean;
   categoryId: string | null;
-  category: { id: string; name: string } | null;
+  category: { id: string; name: string; slug?: string } | null;
   salePointId: string | null;
   salePoint: {
     id: string;

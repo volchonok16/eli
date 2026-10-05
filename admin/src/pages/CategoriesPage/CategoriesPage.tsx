@@ -44,7 +44,7 @@ export function CategoriesPage() {
       <ConfirmModal
         open={deleteTarget !== null}
         title="Удаление категории"
-        message={`Вы уверены, что хотите удалить «${deleteTarget?.name}»? Подкатегории также будут удалены.`}
+        message={`Вы уверены, что хотите удалить «${deleteTarget?.name}»? Товары останутся без категории, подкатегории станут корневыми.`}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
         confirmLabel="Удалить"

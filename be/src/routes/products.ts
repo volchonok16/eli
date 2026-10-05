@@ -11,6 +11,11 @@ import {
 } from "../services/minio.js";
 import { serializeProduct } from "../utils/serializers.js";
 import { paramId } from "../utils/params.js";
+import {
+  CategoryServiceError,
+  assertCategoryExists,
+  resolveCategoryIds,
+} from "../services/categories.js";
 
 export const productsRouter = Router();
 
@@ -47,7 +52,7 @@ const productSchema = z.object({
 const productInclude = {
   images: { orderBy: { sortOrder: "asc" as const } },
   salePoint: true,
-  category: { select: { id: true, name: true } },
+  category: { select: { id: true, name: true, slug: true } },
 };
 
 productsRouter.get("/", async (req, res) => {
@@ -55,7 +60,8 @@ productsRouter.get("/", async (req, res) => {
 
   const categoryId = req.query.categoryId ?? req.query.category;
   if (categoryId) {
-    where.categoryId = String(categoryId);
+    const ids = await resolveCategoryIds(String(categoryId));
+    where.categoryId = { in: ids };
   }
   if (req.query.salePointId) {
     where.salePointId = String(req.query.salePointId);
@@ -193,6 +199,16 @@ productsRouter.post("/", adminAuthMiddleware, upload.array("images", 10), async 
     }
   }
 
+  try {
+    await assertCategoryExists(data.categoryId);
+  } catch (error) {
+    if (error instanceof CategoryServiceError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   const product = await prisma.product.create({
     data: {
       sku: data.sku ?? null,
@@ -253,6 +269,16 @@ productsRouter.put("/:id", adminAuthMiddleware, async (req, res) => {
   }
 
   const data = parsed.data;
+  try {
+    await assertCategoryExists(data.categoryId);
+  } catch (error) {
+    if (error instanceof CategoryServiceError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   const product = await prisma.product.update({
     where: { id },
     data: {

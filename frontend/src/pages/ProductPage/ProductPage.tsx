@@ -114,7 +114,12 @@ export const ProductPage = () => {
                 <span className="text-xs uppercase tracking-[0.2em] text-text-muted/60 font-medium">{product.sort}</span>
               )}
               {product.category && (
-                <span className="text-xs text-text-muted/40 border border-surface-muted px-2 py-0.5">{product.category.name}</span>
+                <Link
+                  to={`/catalog?category=${product.category.slug ?? product.category.id}`}
+                  className="text-xs text-text-muted/40 border border-surface-muted px-2 py-0.5 hover:text-primary hover:border-primary/30 transition-colors"
+                >
+                  {product.category.name}
+                </Link>
               )}
               {product.sku && (
                 <span className="text-[10px] text-text-muted/30 uppercase tracking-widest ml-auto">арт. {product.sku}</span>

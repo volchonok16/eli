@@ -1,4 +1,5 @@
 import type { Category, SalePoint } from "@/api/types";
+import { flattenCategories } from "@/shared/utils/categories";
 
 interface FormFieldsProps {
   form: Record<string, string | boolean>;
@@ -8,15 +9,6 @@ interface FormFieldsProps {
 }
 
 export function ProductFormFields({ form, setField, categories, salePoints }: FormFieldsProps) {
-  function flatCats(cats: Category[], depth = 0): { id: string; label: string }[] {
-    const result: { id: string; label: string }[] = [];
-    for (const c of cats) {
-      result.push({ id: c.id, label: "—".repeat(depth) + " " + c.name });
-      if (c.children?.length) result.push(...flatCats(c.children, depth + 1));
-    }
-    return result;
-  }
-
   return (
     <>
       <div className="form-section">
@@ -53,7 +45,7 @@ export function ProductFormFields({ form, setField, categories, salePoints }: Fo
             <label htmlFor="category">Категория</label>
             <select id="category" value={String(form.categoryId)} onChange={(e) => setField("categoryId", e.target.value)}>
               <option value="">— Не выбрана —</option>
-              {flatCats(categories).map((c) => (
+              {flattenCategories(categories).map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>

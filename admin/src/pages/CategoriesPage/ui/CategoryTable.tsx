@@ -4,7 +4,7 @@ import type { Category } from "@/api/types";
 function renderTree(categories: Category[], onDelete: (id: string, name: string) => void, level = 0) {
   return categories.map((cat) => (
     <CategoryRow key={cat.id} category={cat} onDelete={onDelete} level={level}>
-      {cat.children.length > 0 && renderTree(cat.children, onDelete, level + 1)}
+      {(cat.children?.length ?? 0) > 0 && renderTree(cat.children, onDelete, level + 1)}
     </CategoryRow>
   ));
 }
@@ -47,33 +47,12 @@ function CategoryRow({
   );
 }
 
-function buildTree(categories: Category[]): Category[] {
-  const map = new Map<string, Category>();
-  const roots: Category[] = [];
-
-  for (const c of categories) {
-    map.set(c.id, { ...c, children: [] });
-  }
-
-  for (const c of map.values()) {
-    if (c.parentId && map.has(c.parentId)) {
-      map.get(c.parentId)!.children.push(c);
-    } else {
-      roots.push(c);
-    }
-  }
-
-  return roots;
-}
-
 interface CategoryTableProps {
   categories: Category[];
   onDelete: (id: string, name: string) => void;
 }
 
 export function CategoryTable({ categories, onDelete }: CategoryTableProps) {
-  const tree = buildTree(categories);
-
   return (
     <table className="table">
       <thead>
@@ -83,7 +62,7 @@ export function CategoryTable({ categories, onDelete }: CategoryTableProps) {
           <th></th>
         </tr>
       </thead>
-      <tbody>{renderTree(tree, onDelete)}</tbody>
+      <tbody>{renderTree(categories, onDelete)}</tbody>
     </table>
   );
 }

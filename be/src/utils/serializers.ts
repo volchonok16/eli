@@ -91,7 +91,7 @@ export function serializeProduct(product: {
   isHit: boolean;
   isNew: boolean;
   categoryId: string | null;
-  category?: { id: string; name: string } | null;
+  category?: { id: string; name: string; slug?: string } | null;
   salePointId: string | null;
   salePoint: {
     id: string;
