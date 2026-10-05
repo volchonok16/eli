@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { categoriesApi, type CategoryResponse } from '@/api/endpoints/categories';
-
-export function flattenCategories(categories: CategoryResponse[]): CategoryResponse[] {
-  return categories.flatMap((category) => [
-    category,
-    ...flattenCategories(category.children ?? []),
-  ]);
-}
+import { categoriesApi } from '@/api/endpoints/categories';
 
 export const useCategories = () =>
   useQuery({

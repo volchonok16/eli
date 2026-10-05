@@ -2,7 +2,7 @@ import { resolveProductImage } from '@/shared/utils/mediaUrl';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { flattenCategories, useCategories } from './useCategories';
+import { useCategories } from './useCategories';
 import { useProducts } from './useProducts';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
@@ -26,8 +26,7 @@ export const CatalogPage = () => {
   const [sort, setSort] = useState<string>('popular');
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') ?? '';
-  const { data: categoryTree } = useCategories();
-  const categories = flattenCategories(categoryTree ?? []);
+  const { data: categoryTree = [] } = useCategories();
   const { data: products, isLoading, isError } = useProducts({
     category: category || undefined,
     ...(sort !== 'popular' && { sort }),
@@ -63,12 +62,20 @@ export const CatalogPage = () => {
       <div className="border-b border-surface-muted bg-surface sticky top-[65px] z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 flex-wrap">
-            {[{ slug: '', name: 'Все' }, ...categories].map((item) => (
+            <button
+              onClick={() => setCategory('')}
+              className={`text-xs sm:text-sm px-3 py-1.5 transition-colors ${
+                !category ? 'bg-primary text-surface' : 'text-text-muted hover:text-primary'
+              }`}
+            >
+              Все
+            </button>
+            {categoryTree.map((item) => (
               <button
-                key={item.slug || 'all'}
+                key={item.id}
                 onClick={() => setCategory(item.slug)}
                 className={`text-xs sm:text-sm px-3 py-1.5 transition-colors ${
-                  category === item.slug
+                  category === item.slug || category === item.id
                     ? 'bg-primary text-surface'
                     : 'text-text-muted hover:text-primary'
                 }`}
