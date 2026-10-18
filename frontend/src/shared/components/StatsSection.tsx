@@ -74,10 +74,9 @@ interface Stat {
 }
 
 const defaultStats: Stat[] = [
-  { value: 98, maxValue: 100, suffix: '%', label: 'Приживаемость' },
-  { value: 15, maxValue: 15, suffix: '+', label: 'Лет опыта' },
-  { value: 10000, maxValue: 10000, suffix: '+', label: 'Елей посажено' },
-  { value: 500, maxValue: 500, suffix: '+', label: 'Довольных клиентов' },
+  { value: 3, maxValue: 3, suffix: ' года', label: 'На рынке' },
+  { value: 2800, maxValue: 2800, suffix: '', label: 'Ёлок продано' },
+  { value: 800, maxValue: 800, suffix: '', label: 'Довольных клиентов' },
 ];
 
 interface StatsSectionProps {
@@ -98,7 +97,7 @@ export const StatsSection = ({ items = defaultStats }: StatsSectionProps) => {
   }, []);
 
   return (
-    <div ref={containerRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 max-w-4xl mx-auto">
+    <div ref={containerRef} className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
       {items.map((stat, index) => (
         <AnimatedRing
           key={index}

@@ -126,9 +126,9 @@ export const HeroSection = () => {
             className="flex items-center gap-6 sm:gap-12 mt-10 sm:mt-16"
           >
             {[
-              ['2000+', 'ёлок каждый сезон'],
-              ['15 лет', 'создаём праздник'],
-              ['24 часа', 'доставка'],
+              ['2800+', 'ёлок продано'],
+              ['3 года', 'на рынке'],
+              ['от 2 часов', 'доставка до дома'],
             ].map(([value, label]) => (
               <div key={label}>
                 <p className="font-display text-lg sm:text-2xl text-primary">{value}</p>

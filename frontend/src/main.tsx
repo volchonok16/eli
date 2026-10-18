@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/shared/contexts';
 import { CartProvider } from '@/shared/contexts';
 import { App } from './App';
+import './api/interceptors';
 import './index.css';
 
 const queryClient = new QueryClient({

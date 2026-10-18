@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCart, useUpdateCartQuantity, useRemoveFromCart } from './useCart';
+import { useAuth } from '@/shared/contexts';
 
 const formatPrice = (v: number) => `${v.toLocaleString()} ₽`;
 
@@ -8,6 +9,7 @@ export const CartPage = () => {
   const { data: cart, isLoading } = useCart();
   const updateQuantity = useUpdateCartQuantity();
   const removeItem = useRemoveFromCart();
+  const { isAuthenticated } = useAuth();
 
   const items = cart?.items ?? [];
   const total = cart?.total ?? 0;
@@ -20,9 +22,11 @@ export const CartPage = () => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25M4.5 2.25h15M5.25 3v1.5M18.75 3v1.5M3 12.75h18M5.25 20.25h13.5M8.25 15.75L12 12l3.75 3.75" />
         </svg>
         <h1 className="font-serif text-3xl text-primary mb-4">Корзина пуста</h1>
-        <p className="text-text-muted mb-8">Вы ещё не добавили ни одной ели в корзину</p>
-        <Link to="/catalog" className="btn-primary">
-          Перейти в каталог
+        <p className="text-text-muted mb-8">
+          {isAuthenticated ? 'Вы ещё не добавили ни одной ели в корзину' : 'Войдите в аккаунт, чтобы добавлять товары и сохранять корзину'}
+        </p>
+        <Link to={isAuthenticated ? '/catalog' : '/login'} className="btn-primary">
+          {isAuthenticated ? 'Перейти в каталог' : 'Войти'}
         </Link>
       </div>
     );

@@ -1,13 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cartApi } from '@/api/endpoints/cart';
+import { useAuth } from '@/shared/contexts';
 
-export const useCart = () =>
-  useQuery({
-    queryKey: ['cart'],
+export const useCart = () => {
+  const { isAuthenticated, user } = useAuth();
+  return useQuery({
+    queryKey: ['cart', user?.id],
     queryFn: cartApi.get,
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
     retry: false,
   });
+};
 
 export const useAddToCart = () => {
   const qc = useQueryClient();

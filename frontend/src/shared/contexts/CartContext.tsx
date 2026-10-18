@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useCallback, useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cartApi } from '@/api/endpoints/cart';
+import { useAuth } from '@/shared/contexts/AuthContext';
 
 interface BackendCartItem {
   id: string;
@@ -68,17 +69,21 @@ const CartContext = createContext<{
 } | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { isAuthenticated, user } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const { data: cartData } = useQuery({
-    queryKey: ['cart'],
+    queryKey: ['cart', user?.id],
     queryFn: cartApi.get,
+    enabled: isAuthenticated,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
     retry: false,
   });
 
   useEffect(() => {
-    if (cartData) {
+    if (!isAuthenticated) {
+      dispatch({ type: 'SET_ITEMS', items: [], total: 0 });
+    } else if (cartData) {
       dispatch({
         type: 'SET_ITEMS',
         items: cartData.items,

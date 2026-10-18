@@ -1,17 +1,11 @@
 import { SectionHeading, StatsSection } from '@/shared/components';
-import { useStats } from '@/pages/HomePage/useStats';
 
 export const StatsBanner = () => {
-  const { data: stats } = useStats();
-
-  const items = stats
-    ? [
-        { value: stats.survivalRate, maxValue: 100, suffix: '%', label: 'Стойкость' },
-        { value: stats.yearsExperience, maxValue: stats.yearsExperience + 5, suffix: '+', label: 'Лет на рынке' },
-        { value: stats.treesPlanted, maxValue: stats.treesPlanted, suffix: '+', label: 'Ёлок продано' },
-        { value: stats.happyCustomers, maxValue: stats.happyCustomers, suffix: '+', label: 'Счастливых семей' },
-      ]
-    : undefined;
+  const items = [
+    { value: 3, maxValue: 3, suffix: ' года', label: 'На рынке' },
+    { value: 2800, maxValue: 2800, suffix: '', label: 'Ёлок продано' },
+    { value: 800, maxValue: 800, suffix: '', label: 'Довольных клиентов' },
+  ];
 
   return (
     <section className="py-20 bg-primary relative overflow-hidden">
@@ -22,8 +16,8 @@ export const StatsBanner = () => {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Eli в цифрах"
-          subtitle="15 лет создаём новогоднее настроение"
+          title="Премиум ель в цифрах"
+          subtitle="Три года помогаем создавать новогоднее настроение"
           light
           display
         />

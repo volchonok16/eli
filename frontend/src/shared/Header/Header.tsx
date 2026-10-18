@@ -8,8 +8,8 @@ import { CartIcon } from './ui/CartIcon';
 
 const navLinks = [
   { to: '/catalog', label: 'Каталог' },
-  { to: '/wholesale', label: 'Оптом' },
   { to: '/bases', label: 'Базары' },
+  { to: '/wholesale', label: 'Оптом' },
   { to: '/partners', label: 'Партнёрам' },
   { to: '/about', label: 'О нас' },
 ];

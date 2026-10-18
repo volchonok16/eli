@@ -1,9 +1,11 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useProduct } from './hooks/useProduct';
 import { useAddToCart } from '@/pages/CartPage/useCart';
 import { resolveProductImage } from '@/shared/utils/mediaUrl';
+import { useAuth } from '@/shared/contexts';
+import { handleApiError } from '@/api/errorHandler';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -11,13 +13,22 @@ export const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading } = useProduct(id!);
   const addToCart = useAddToCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [cartError, setCartError] = useState('');
 
   const handleAddToCart = () => {
     if (!id) return;
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setCartError('');
     addToCart.mutate({ productId: id }, {
       onSuccess: () => { setAdded(true); setTimeout(() => setAdded(false), 2000); },
+      onError: (error) => setCartError(handleApiError(error)),
     });
   };
 
@@ -162,6 +173,10 @@ export const ProductPage = () => {
               )}
             </div>
 
+            {!isAuthenticated && (
+              <p className="text-sm text-text-muted mb-4">Чтобы добавить товар в корзину, войдите в аккаунт.</p>
+            )}
+            {cartError && <p role="alert" className="text-error text-sm mb-4">{cartError}</p>}
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <button
                 onClick={handleAddToCart}
@@ -170,7 +185,7 @@ export const ProductPage = () => {
                   added ? 'bg-green-700 scale-95' : ''
                 }`}
               >
-                {added ? 'Добавлено ✓' : addToCart.isPending ? 'Добавление...' : 'Добавить в корзину'}
+                {!isAuthenticated ? 'Войти и добавить в корзину' : added ? 'Добавлено ✓' : addToCart.isPending ? 'Добавление...' : 'Добавить в корзину'}
               </button>
               <Link to="/cart" className="btn-outline flex-1 text-center text-sm sm:text-base py-4">
                 В корзину
