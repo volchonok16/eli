@@ -1,6 +1,7 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { SESSION_MESSAGE_KEY } from "@/api/client";
 
 export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
@@ -8,6 +9,13 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const message = sessionStorage.getItem(SESSION_MESSAGE_KEY);
+    if (!message) return;
+    sessionStorage.removeItem(SESSION_MESSAGE_KEY);
+    setError(message);
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

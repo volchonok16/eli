@@ -3,9 +3,10 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
-import { setToken, getToken, clearToken } from "@/api/client";
+import { setToken, getToken, clearToken, UNAUTHORIZED_EVENT } from "@/api/client";
 import { login as apiLogin } from "@/api/endpoints/auth";
 
 interface AuthContextValue {
@@ -28,6 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearToken();
     setIsAuthenticated(false);
+  }, []);
+
+  useEffect(() => {
+    const onUnauthorized = () => setIsAuthenticated(false);
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
   return (
