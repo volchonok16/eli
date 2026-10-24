@@ -23,6 +23,15 @@ export class TochkaServiceError extends Error {
   }
 }
 
+function formatNetworkError(error: unknown): string {
+  const err = error as Error & { cause?: Error & { code?: string } };
+  const cause = err.cause;
+  const detail = [cause?.code, cause?.message || err.message]
+    .filter(Boolean)
+    .join(" ");
+  return detail || "сеть недоступна";
+}
+
 function parseTochkaError(text: string): string {
   try {
     const json = JSON.parse(text) as {
@@ -71,17 +80,26 @@ export class TochkaService {
       payload.merchantId = config.tochka.merchantId;
     }
 
-    const response = await fetch(
-      `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${config.tochka.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Data: payload }),
-      }
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.tochka.accessToken}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ Data: payload }),
+        }
+      );
+    } catch (error) {
+      throw new TochkaServiceError(
+        `Не удалось связаться с Точка Банк: ${formatNetworkError(error)}`,
+        502
+      );
+    }
 
     if (!response.ok) {
       const text = await response.text();
@@ -113,14 +131,23 @@ export class TochkaService {
       throw new TochkaServiceError("Точка Банк не настроен", 502);
     }
 
-    const response = await fetch(
-      `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments/${operationId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${config.tochka.accessToken}`,
-        },
-      }
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments/${operationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${config.tochka.accessToken}`,
+            Accept: "application/json",
+          },
+        }
+      );
+    } catch (error) {
+      throw new TochkaServiceError(
+        `Не удалось связаться с Точка Банк: ${formatNetworkError(error)}`,
+        502
+      );
+    }
 
     if (!response.ok) {
       const text = await response.text();

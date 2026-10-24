@@ -13,18 +13,22 @@ export async function sendTelegramMessage(text: string): Promise<void> {
   }
 
   const url = `https://api.telegram.org/bot${config.telegram.botToken}/sendMessage`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: config.telegram.chatId,
-      text,
-      parse_mode: "HTML",
-    }),
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: config.telegram.chatId,
+        text,
+        parse_mode: "HTML",
+      }),
+    });
 
-  if (!response.ok) {
-    console.error("Telegram send failed:", await response.text());
+    if (!response.ok) {
+      console.error("Telegram send failed:", await response.text());
+    }
+  } catch (error) {
+    console.error("Telegram send failed:", error);
   }
 }
 

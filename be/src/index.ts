@@ -1,8 +1,11 @@
+import dns from "node:dns";
 import { createApp } from "./app.js";
 import { config, assertProductionSecrets } from "./config.js";
 import { prisma } from "./db/prisma.js";
 import { initMinio, checkMinioConnection } from "./services/minio.js";
 import { startOrderExpiryScheduler } from "./services/reservation.js";
+
+dns.setDefaultResultOrder("ipv4first");
 
 async function main() {
   assertProductionSecrets();
