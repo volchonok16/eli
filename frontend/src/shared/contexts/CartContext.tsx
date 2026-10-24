@@ -69,21 +69,18 @@ const CartContext = createContext<{
 } | null>(null);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const { data: cartData } = useQuery({
-    queryKey: ['cart', user?.id],
+    queryKey: ['cart', user?.id ?? 'guest'],
     queryFn: cartApi.get,
-    enabled: isAuthenticated,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
     retry: false,
   });
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'SET_ITEMS', items: [], total: 0 });
-    } else if (cartData) {
+    if (cartData) {
       dispatch({
         type: 'SET_ITEMS',
         items: cartData.items,

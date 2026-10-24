@@ -3,11 +3,10 @@ import { cartApi } from '@/api/endpoints/cart';
 import { useAuth } from '@/shared/contexts';
 
 export const useCart = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['cart', user?.id],
+    queryKey: ['cart', user?.id ?? 'guest'],
     queryFn: cartApi.get,
-    enabled: isAuthenticated,
     staleTime: 30 * 1000,
     retry: false,
   });
