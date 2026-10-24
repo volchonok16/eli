@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
+import { handleApiError } from '@/api/errorHandler';
 import { useCreateOrder } from './hooks/useCheckout';
 import { useCart } from '@/pages/CartPage/useCart';
 
@@ -50,7 +51,7 @@ export const CheckoutPage = () => {
           }
         },
         onError: (err) => {
-          setError(err instanceof Error ? err.message : 'Ошибка при создании заказа');
+          setError(handleApiError(err));
         },
       },
     );

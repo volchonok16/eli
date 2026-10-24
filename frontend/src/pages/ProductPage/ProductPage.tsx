@@ -1,11 +1,10 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { handleApiError } from '@/api/errorHandler';
 import { useProduct } from './hooks/useProduct';
 import { useAddToCart } from '@/pages/CartPage/useCart';
 import { resolveProductImage } from '@/shared/utils/mediaUrl';
-import { useAuth } from '@/shared/contexts';
-import { handleApiError } from '@/api/errorHandler';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -13,22 +12,16 @@ export const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading } = useProduct(id!);
   const addToCart = useAddToCart();
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
   const [cartError, setCartError] = useState('');
 
   const handleAddToCart = () => {
     if (!id) return;
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
     setCartError('');
     addToCart.mutate({ productId: id }, {
       onSuccess: () => { setAdded(true); setTimeout(() => setAdded(false), 2000); },
-      onError: (error) => setCartError(handleApiError(error)),
+      onError: (err) => setCartError(handleApiError(err)),
     });
   };
 
@@ -159,33 +152,33 @@ export const ProductPage = () => {
                   <p className="text-primary font-medium">{product.heightLabel} м</p>
                 </div>
               )}
-              {product.quantity > 0 && (
+              {product.available && product.quantity > 0 && (
                 <div className="card p-4">
                   <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">В наличии</p>
                   <p className="text-primary font-medium">{product.quantity - product.reserved} шт</p>
                 </div>
               )}
-              {product.inStock && (
-                <div className="card p-4">
-                  <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">Статус</p>
-                  <p className="text-green-700 font-medium text-sm">В наличии</p>
-                </div>
-              )}
+              <div className="card p-4">
+                <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">Статус</p>
+                <p className={`font-medium text-sm ${product.available ? 'text-green-700' : 'text-error'}`}>
+                  {product.available ? 'В наличии' : 'Нет в наличии'}
+                </p>
+              </div>
             </div>
 
-            {!isAuthenticated && (
-              <p className="text-sm text-text-muted mb-4">Чтобы добавить товар в корзину, войдите в аккаунт.</p>
+            {cartError && (
+              <p role="alert" className="text-error text-sm bg-error/5 border border-error/20 p-3 mb-4">{cartError}</p>
             )}
-            {cartError && <p role="alert" className="text-error text-sm mb-4">{cartError}</p>}
+
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <button
                 onClick={handleAddToCart}
-                disabled={addToCart.isPending || added}
+                disabled={!product.available || addToCart.isPending || added}
                 className={`btn-primary flex-1 text-sm sm:text-base px-8 py-4 transition-all duration-300 ${
                   added ? 'bg-green-700 scale-95' : ''
                 }`}
               >
-                {!isAuthenticated ? 'Войти и добавить в корзину' : added ? 'Добавлено ✓' : addToCart.isPending ? 'Добавление...' : 'Добавить в корзину'}
+                {added ? 'Добавлено ✓' : addToCart.isPending ? 'Добавление...' : product.available ? 'Добавить в корзину' : 'Нет в наличии'}
               </button>
               <Link to="/cart" className="btn-outline flex-1 text-center text-sm sm:text-base py-4">
                 В корзину

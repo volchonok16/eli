@@ -109,6 +109,28 @@ export function optionalUserAuthMiddleware(
   }
 }
 
+export function softUserAuthMiddleware(
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): void {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    next();
+    return;
+  }
+
+  try {
+    const payload = verifyToken(header.slice(7));
+    if ("userId" in payload) {
+      req.auth = payload;
+    }
+  } catch {
+    // Просроченный токен не должен мешать гостевой корзине
+  }
+  next();
+}
+
 export function getUserId(req: AuthRequest): string {
   if (!req.auth || !("userId" in req.auth)) {
     throw new Error("Требуется авторизация пользователя");

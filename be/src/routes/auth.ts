@@ -18,6 +18,12 @@ import {
   uploadUserAvatar,
 } from "../services/minio.js";
 import { isValidPhone, normalizePhone } from "../utils/phone.js";
+import { mergeGuestCartIntoUser } from "../services/cart.js";
+import {
+  GUEST_CART_COOKIE,
+  clearGuestCartCookie,
+  readCookie,
+} from "../utils/cookies.js";
 
 export const authRouter = Router();
 
@@ -136,6 +142,11 @@ authRouter.post(
       });
 
       const token = signUserToken(user.id, user.role);
+      const guestKey = readCookie(req, GUEST_CART_COOKIE);
+      if (guestKey) {
+        await mergeGuestCartIntoUser(guestKey, user.id);
+        clearGuestCartCookie(res);
+      }
       res.status(201).json({
         token,
         user: serializeUser(user),
@@ -184,6 +195,11 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const token = signUserToken(user.id, user.role);
+    const guestKey = readCookie(req, GUEST_CART_COOKIE);
+    if (guestKey) {
+      await mergeGuestCartIntoUser(guestKey, user.id);
+      clearGuestCartCookie(res);
+    }
     res.json({ token, user: serializeUser(user) });
     return;
   }
@@ -203,6 +219,11 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const token = signUserToken(user.id, user.role);
+    const guestKey = readCookie(req, GUEST_CART_COOKIE);
+    if (guestKey) {
+      await mergeGuestCartIntoUser(guestKey, user.id);
+      clearGuestCartCookie(res);
+    }
     res.json({ token, user: serializeUser(user) });
     return;
   }

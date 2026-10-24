@@ -3,7 +3,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { DeliveryType, OrderStatus } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
-import { tochkaService } from "../services/tochka.js";
+import { tochkaService, TochkaServiceError } from "../services/tochka.js";
 import { notifyNewOrder } from "../services/telegram.js";
 import { notifyNewOrderMax } from "../services/max.js";
 import {
@@ -30,19 +30,28 @@ const createOrderSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string().uuid(),
-        quantity: z.number().int().positive(),
+        productId: z.string().uuid("Некорректный товар"),
+        quantity: z.coerce.number().int().positive("Количество должно быть больше 0"),
       })
     )
     .min(1, "Корзина пуста"),
-  customerName: z.string().min(1).optional(),
-  customerPhone: z.string().min(1).optional(),
-  customerEmail: z.string().email().optional(),
+  customerName: z.string().trim().min(1, "Укажите имя").optional(),
+  customerPhone: z.string().trim().min(1, "Укажите телефон").optional(),
+  customerEmail: z
+    .string()
+    .trim()
+    .email("Укажите корректный email")
+    .optional()
+    .or(z.literal("")),
   deliveryType: z.nativeEnum(DeliveryType).optional(),
-  salePointId: z.string().uuid().optional(),
-  deliveryAddress: z.string().optional(),
-  deliveryZoneId: z.string().uuid().optional(),
+  salePointId: z.string().uuid("Некорректная точка продаж").optional(),
+  deliveryAddress: z.string().trim().optional(),
+  deliveryZoneId: z.string().uuid("Некорректная зона доставки").optional(),
 });
+
+function zodErrorMessage(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Некорректные данные заказа";
+}
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: "Ожидает оплаты",
@@ -112,7 +121,7 @@ function serializeOrderListItem(order: {
 ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res) => {
   const parsed = createOrderSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: zodErrorMessage(parsed.error) });
     return;
   }
 
@@ -200,7 +209,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       userId,
       customerName: parsed.data.customerName ?? null,
       customerPhone: parsed.data.customerPhone ?? null,
-      customerEmail: parsed.data.customerEmail ?? null,
+      customerEmail: parsed.data.customerEmail || null,
       deliveryType: parsed.data.deliveryType ?? null,
       salePointId: parsed.data.salePointId ?? null,
       deliveryAddress: parsed.data.deliveryAddress ?? null,
@@ -217,7 +226,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
 
   try {
     const payment = await tochkaService.createPaymentLink({
-      amount: totalAmount,
+      amount: Number(totalAmount.toFixed(2)),
       purpose: `Оплата заказа ${order.id}`,
       paymentLinkId,
     });
@@ -258,7 +267,8 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
 
     const message =
       error instanceof Error ? error.message : "Ошибка создания платежа";
-    res.status(502).json({ error: message });
+    const status = error instanceof TochkaServiceError ? error.status : 502;
+    res.status(status >= 400 && status < 600 ? status : 502).json({ error: message });
   }
 });
 

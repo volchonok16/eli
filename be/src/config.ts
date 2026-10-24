@@ -56,6 +56,11 @@ export const config = {
     accessToken: optional("TOCHKA_ACCESS_TOKEN"),
     customerCode: optional("TOCHKA_CUSTOMER_CODE"),
     webhookSecret: optional("TOCHKA_WEBHOOK_SECRET"),
+    merchantId: optional("TOCHKA_MERCHANT_ID"),
+    paymentModes: optional("TOCHKA_PAYMENT_MODES", "card")
+      .split(",")
+      .map((mode) => mode.trim())
+      .filter(Boolean),
   },
 
   telegram: {

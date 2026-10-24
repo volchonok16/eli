@@ -13,6 +13,34 @@ interface PaymentOperationResponse {
   paymentLink: string;
 }
 
+export class TochkaServiceError extends Error {
+  constructor(
+    message: string,
+    public status: number = 502
+  ) {
+    super(message);
+    this.name = "TochkaServiceError";
+  }
+}
+
+function parseTochkaError(text: string): string {
+  try {
+    const json = JSON.parse(text) as {
+      message?: string;
+      error?: string;
+      Errors?: { message?: string; error?: string }[];
+      meta?: { response?: { errors?: { message?: string }[] } };
+    };
+    const nested =
+      json.Errors?.[0]?.message ??
+      json.Errors?.[0]?.error ??
+      json.meta?.response?.errors?.[0]?.message;
+    return json.message || json.error || nested || text;
+  } catch {
+    return text;
+  }
+}
+
 export class TochkaService {
   private get isConfigured(): boolean {
     return Boolean(config.tochka.accessToken && config.tochka.customerCode);
@@ -22,9 +50,25 @@ export class TochkaService {
     params: CreatePaymentParams
   ): Promise<PaymentOperationResponse> {
     if (!this.isConfigured) {
-      throw new Error(
-        "Точка Банк не настроен: укажите TOCHKA_ACCESS_TOKEN и TOCHKA_CUSTOMER_CODE в .env"
+      throw new TochkaServiceError(
+        "Точка Банк не настроен: укажите TOCHKA_ACCESS_TOKEN и TOCHKA_CUSTOMER_CODE в .env",
+        502
       );
+    }
+
+    const payload: Record<string, unknown> = {
+      customerCode: config.tochka.customerCode,
+      amount: Number(params.amount.toFixed(2)),
+      purpose: params.purpose,
+      paymentLinkId: params.paymentLinkId,
+      paymentMode: config.tochka.paymentModes,
+      redirectUrl: params.redirectUrl ?? `${config.feUrl}/payment/success`,
+      failRedirectUrl:
+        params.failRedirectUrl ?? `${config.feUrl}/payment/fail`,
+    };
+
+    if (config.tochka.merchantId) {
+      payload.merchantId = config.tochka.merchantId;
     }
 
     const response = await fetch(
@@ -35,24 +79,16 @@ export class TochkaService {
           Authorization: `Bearer ${config.tochka.accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          Data: {
-            customerCode: config.tochka.customerCode,
-            amount: params.amount,
-            purpose: params.purpose,
-            paymentLinkId: params.paymentLinkId,
-            paymentMode: ["card", "sbp"],
-            redirectUrl: params.redirectUrl ?? `${config.feUrl}/payment/success`,
-            failRedirectUrl:
-              params.failRedirectUrl ?? `${config.feUrl}/payment/fail`,
-          },
-        }),
+        body: JSON.stringify({ Data: payload }),
       }
     );
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Ошибка Точка Банк: ${response.status} ${text}`);
+      throw new TochkaServiceError(
+        `Не удалось создать платёж: ${parseTochkaError(text)}`,
+        response.status
+      );
     }
 
     const data = (await response.json()) as {
@@ -66,7 +102,7 @@ export class TochkaService {
     const paymentLink = data.Data?.paymentLink;
 
     if (!operationId || !paymentLink) {
-      throw new Error("Точка Банк вернул неполный ответ");
+      throw new TochkaServiceError("Точка Банк вернул неполный ответ", 502);
     }
 
     return { operationId, paymentLink };
@@ -74,7 +110,7 @@ export class TochkaService {
 
   async getPaymentStatus(operationId: string): Promise<string> {
     if (!this.isConfigured) {
-      throw new Error("Точка Банк не настроен");
+      throw new TochkaServiceError("Точка Банк не настроен", 502);
     }
 
     const response = await fetch(
@@ -88,7 +124,10 @@ export class TochkaService {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Ошибка получения статуса: ${response.status} ${text}`);
+      throw new TochkaServiceError(
+        `Ошибка получения статуса: ${parseTochkaError(text)}`,
+        response.status
+      );
     }
 
     const data = (await response.json()) as {
