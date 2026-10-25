@@ -94,7 +94,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 1.3, ease: 'easeOut' }}
             className="text-sm sm:text-lg text-text-muted/90 mb-6 sm:mb-10 max-w-md leading-relaxed"
           >
-            Свежайшие новогодние ёлки с доставкой по Москве и области.
+            Новогодняя традиция в её самом красивом воплощении.
             <br className="hidden sm:block" />
             Выберите размер, а об остальном позаботимся мы.
           </motion.p>

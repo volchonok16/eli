@@ -72,6 +72,11 @@ export const config = {
     botToken: optional("MAX_BOT_TOKEN"),
     chatId: optional("MAX_CHAT_ID"),
   },
+
+  hvoyaStockUrl: optional(
+    "HVOYA_STOCK_URL",
+    "https://hvoya-tochki.ru/api/public/v1/stock"
+  ),
 };
 
 export function assertProductionSecrets(): void {

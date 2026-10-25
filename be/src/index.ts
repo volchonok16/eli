@@ -3,6 +3,7 @@ import { createApp } from "./app.js";
 import { config, assertProductionSecrets } from "./config.js";
 import { prisma } from "./db/prisma.js";
 import { initMinio, checkMinioConnection } from "./services/minio.js";
+import { startHvoyaStockSync } from "./services/hvoya-stock.js";
 import { startOrderExpiryScheduler } from "./services/reservation.js";
 
 dns.setDefaultResultOrder("ipv4first");
@@ -19,6 +20,7 @@ async function main() {
     );
   }
   startOrderExpiryScheduler();
+  startHvoyaStockSync();
 
   const app = createApp();
   app.listen(config.port, () => {

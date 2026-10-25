@@ -153,6 +153,11 @@ export const CatalogPage = () => {
                         <p className="text-text-muted text-sm mb-3">{product.heightLabel} м</p>
                       )}
                       <p className="font-sans text-xl text-accent font-semibold">{formatPrice(product.price)}</p>
+                      <p className={`text-sm mt-2 ${product.available ? "text-green-700" : "text-text-muted"}`}>
+                        {product.available
+                          ? `В наличии: ${Math.max(0, product.quantity - product.reserved)} шт`
+                          : "Нет в наличии"}
+                      </p>
                     </div>
                   </motion.article>
                 </Link>

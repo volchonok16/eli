@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { isHvoyaTrackedSku } from "./hvoya-stock.js";
 import { notifyOrderPaid } from "./telegram.js";
 import { notifyOrderPaidMax } from "./max.js";
 
@@ -14,6 +15,14 @@ export async function completeOrderPayment(orderId: string): Promise<void> {
 
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
+      if (isHvoyaTrackedSku(item.product.sku)) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { reserved: { decrement: item.quantity } },
+        });
+        continue;
+      }
+
       const updated = await tx.product.update({
         where: { id: item.productId },
         data: {

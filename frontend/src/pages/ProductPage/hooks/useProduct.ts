@@ -6,5 +6,5 @@ export const useProduct = (id: string) =>
     queryKey: ['product', id],
     queryFn: () => productsApi.getById(id),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });

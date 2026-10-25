@@ -5,7 +5,7 @@ export const useProducts = (filters?: ProductFilters) =>
   useQuery({
     queryKey: ['products', filters],
     queryFn: () => productsApi.getAll(filters),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
 export const useFeaturedProducts = () =>
