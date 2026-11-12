@@ -16,11 +16,11 @@ const hvoyaKeyParameter = {
 };
 
 const hvoyaTokenParameter = {
-  name: "Authorization",
+  name: "X-Hvoya-Token",
   in: "header",
   required: true,
-  description: "Суточный токен из ответа POST /api/hvoya/auth/confirm. Слово Bearer и значение token через пробел",
-  schema: { type: "string", example: "Bearer вставьте token из ответа confirm" },
+  description: "Суточный token из ответа POST /api/hvoya/auth/confirm, без слова Bearer",
+  schema: { type: "string", example: "вставьте token из ответа confirm" },
 };
 
 function endpoint(

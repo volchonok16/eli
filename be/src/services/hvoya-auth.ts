@@ -138,8 +138,8 @@ export async function hvoyaAuthStatus() {
   };
 }
 
-export async function assertHvoyaToken(header: string | undefined): Promise<void> {
-  const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
+export async function assertHvoyaToken(token: string | undefined): Promise<void> {
+  token = token?.trim();
   if (!token) {
     throw new HvoyaAuthError("Нужно суточное подтверждение", 401);
   }

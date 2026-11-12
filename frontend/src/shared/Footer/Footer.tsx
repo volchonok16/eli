@@ -38,8 +38,10 @@ export const Footer = () => (
         </div>
       </div>
 
-      <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-primary-light/20 text-center text-text-inverse/30 text-xs sm:text-sm">
-        © {new Date().getFullYear()} Eli. Все права защищены.
+      <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-primary-light/20 text-center text-xs sm:text-sm space-y-1">
+        <p className="text-text-inverse/50">ИП Кузнецов Артем Витальевич</p>
+        <p className="text-text-inverse/50">ИНН 773179990292 · ОГРНИП 319774600626902</p>
+        <p className="text-text-inverse/30">© {new Date().getFullYear()} Eli. Все права защищены.</p>
       </div>
     </div>
   </footer>

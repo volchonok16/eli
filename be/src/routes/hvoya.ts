@@ -38,9 +38,18 @@ hvoyaRouter.use((req, res, next) => {
   }
 });
 
+function sessionToken(req: { header(name: string): string | undefined }): string | undefined {
+  const direct = req.header("x-hvoya-token")?.trim();
+  if (direct) return direct;
+
+  const header = req.header("authorization")?.trim();
+  if (!header) return undefined;
+  return header.toLowerCase().startsWith("bearer ") ? header.slice("bearer ".length).trim() : header;
+}
+
 async function requireSession(req: { header(name: string): string | undefined }, res: { status(code: number): { json(body: unknown): void } }) {
   try {
-    await assertHvoyaToken(req.header("authorization"));
+    await assertHvoyaToken(sessionToken(req));
     return true;
   } catch (error) {
     sendError(res, error);
