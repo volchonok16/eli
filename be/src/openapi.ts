@@ -15,15 +15,28 @@ const hvoyaKeyParameter = {
   schema: { type: "string", example: "вставьте ключ из HVOYA_INTEGRATION_KEY" },
 };
 
+const hvoyaTokenParameter = {
+  name: "Authorization",
+  in: "header",
+  required: true,
+  description: "Суточный токен из ответа POST /api/hvoya/auth/confirm. Слово Bearer и значение token через пробел",
+  schema: { type: "string", example: "Bearer вставьте token из ответа confirm" },
+};
+
 function endpoint(
   tag: string,
   { summary, secured = false, hvoyaKey = false, body }: EndpointOptions
 ) {
+  const parameters = [
+    ...(hvoyaKey ? [hvoyaKeyParameter] : []),
+    ...(hvoyaKey && secured ? [hvoyaTokenParameter] : []),
+  ];
+
   return {
     summary,
     tags: [tag],
-    ...(secured ? { security: [{ bearerAuth: [] }] } : {}),
-    ...(hvoyaKey ? { parameters: [hvoyaKeyParameter] } : {}),
+    ...(secured && !hvoyaKey ? { security: [{ bearerAuth: [] }] } : {}),
+    ...(parameters.length > 0 ? { parameters } : {}),
     ...(body
       ? {
           requestBody: {
