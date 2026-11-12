@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import { config } from "./config.js";
+import { createOpenApiDocument } from "./openapi.js";
 import { authRouter } from "./routes/auth.js";
 import { productsRouter } from "./routes/products.js";
 import { servicesRouter } from "./routes/services.js";
@@ -52,6 +54,24 @@ export function createApp() {
     })
   );
   app.use(express.json());
+
+  app.use(
+    "/api-docs",
+    (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+      const host = (req.get("x-forwarded-host") ?? req.get("host") ?? "")
+        .split(",")[0]
+        .trim();
+      const proto = (req.get("x-forwarded-proto") ?? req.protocol)
+        .split(",")[0]
+        .trim();
+      const apiUrl = host ? `${proto}://${host}` : config.apiUrl;
+      (req as express.Request & { swaggerDoc?: unknown }).swaggerDoc =
+        createOpenApiDocument(apiUrl);
+      next();
+    },
+    swaggerUi.serve,
+    swaggerUi.setup(null, { customSiteTitle: "Премиумель API" })
+  );
 
   app.get("/health", async (_req, res) => {
     const minioOk = await checkMinioConnection();

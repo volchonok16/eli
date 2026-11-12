@@ -14,6 +14,7 @@ RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
+COPY certs ./certs
 COPY dist ./dist
 
 RUN npx prisma generate

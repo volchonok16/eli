@@ -1,3 +1,8 @@
+import { existsSync, readFileSync } from "node:fs";
+import https from "node:https";
+import path from "node:path";
+import tls from "node:tls";
+import { fileURLToPath } from "node:url";
 import { config } from "../config.js";
 
 interface CreatePaymentParams {
@@ -21,6 +26,64 @@ export class TochkaServiceError extends Error {
     super(message);
     this.name = "TochkaServiceError";
   }
+}
+
+const certificateNames = [
+  "russian-trusted-root-ca.pem",
+  "russian-trusted-sub-ca.pem",
+];
+
+function certificatePath(name: string): string {
+  const candidates = [
+    path.resolve(process.cwd(), "certs", name),
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../certs", name),
+  ];
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) {
+    throw new Error(`Не найден сертификат ${name}`);
+  }
+  return found;
+}
+
+const tochkaAgent = new https.Agent({
+  keepAlive: true,
+  ca: [
+    ...tls.rootCertificates,
+    ...certificateNames.map((name) => readFileSync(certificatePath(name), "utf8")),
+  ],
+});
+
+function tochkaRequest(
+  url: string,
+  init: { method?: string; headers?: Record<string, string>; body?: string }
+): Promise<{ ok: boolean; status: number; text: () => Promise<string>; json: () => Promise<unknown> }> {
+  return new Promise((resolve, reject) => {
+    const request = https.request(
+      url,
+      {
+        method: init.method ?? "GET",
+        headers: init.headers,
+        agent: tochkaAgent,
+      },
+      (response) => {
+        const chunks: Buffer[] = [];
+        response.on("data", (chunk: Buffer) => chunks.push(chunk));
+        response.on("end", () => {
+          const body = Buffer.concat(chunks).toString("utf8");
+          const status = response.statusCode ?? 0;
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            text: async () => body,
+            json: async () => JSON.parse(body) as unknown,
+          });
+        });
+      }
+    );
+    request.on("error", reject);
+    if (init.body) request.write(init.body);
+    request.end();
+  });
 }
 
 function formatNetworkError(error: unknown): string {
@@ -80,9 +143,9 @@ export class TochkaService {
       payload.merchantId = config.tochka.merchantId;
     }
 
-    let response: Response;
+    let response: Awaited<ReturnType<typeof tochkaRequest>>;
     try {
-      response = await fetch(
+      response = await tochkaRequest(
         `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments`,
         {
           method: "POST",
@@ -131,9 +194,9 @@ export class TochkaService {
       throw new TochkaServiceError("Точка Банк не настроен", 502);
     }
 
-    let response: Response;
+    let response: Awaited<ReturnType<typeof tochkaRequest>>;
     try {
-      response = await fetch(
+      response = await tochkaRequest(
         `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments/${operationId}`,
         {
           headers: {
