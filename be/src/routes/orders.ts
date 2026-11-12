@@ -6,6 +6,7 @@ import { prisma } from "../db/prisma.js";
 import { tochkaService, TochkaServiceError } from "../services/tochka.js";
 import { notifyNewOrder } from "../services/telegram.js";
 import { notifyNewOrderMax } from "../services/max.js";
+import { notifyOrderFormed } from "../services/order-mail.js";
 import {
   cancelOrder,
   getCartReservedUntil,
@@ -171,6 +172,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
     deliveryCost = Number(zone.basePrice);
   }
 
+  let salePointName: string | null = null;
   if (parsed.data.deliveryType === DeliveryType.SELF_PICKUP && parsed.data.salePointId) {
     const point = await prisma.salePoint.findUnique({
       where: { id: parsed.data.salePointId },
@@ -179,6 +181,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       res.status(400).json({ error: "Точка продаж не найдена" });
       return;
     }
+    salePointName = point.shortName;
   }
 
   const totalAmount = itemsTotal + deliveryCost;
@@ -243,10 +246,31 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       name: i.product.name,
       quantity: i.quantity,
     }));
+    const deliveryLabel =
+      parsed.data.deliveryType === DeliveryType.SELF_PICKUP
+        ? `Самовывоз${salePointName ? ` · ${salePointName}` : ""}`
+        : parsed.data.deliveryAddress
+          ? `Доставка · ${parsed.data.deliveryAddress}`
+          : null;
 
     await Promise.all([
       notifyNewOrder(order.id, totalAmount, notifyItems),
       notifyNewOrderMax(order.id, totalAmount, notifyItems),
+      notifyOrderFormed({
+        to: order.customerEmail ?? "",
+        customerName: order.customerName,
+        orderId: order.id,
+        items: order.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+        })),
+        itemsTotal,
+        deliveryCost,
+        deliveryLabel,
+        paymentLink: updated.paymentLink,
+        createdAt: order.createdAt,
+      }),
     ]);
 
     res.status(201).json({
