@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
+import { bindHvoyaCatalog } from "./hvoya-catalog.js";
 import { rememberHvoyaSkus } from "./hvoya-stock.js";
 
 export const locationCodes = ["lapino", "vnukovo", "riga", "rogozino"] as const;
@@ -216,6 +217,7 @@ function validateOperation(input: OperationInput): string | null {
 }
 
 export async function applyAggregateStock(items: StockItemInput[]) {
+  await bindHvoyaCatalog();
   const unmatched: { sku: string; name: string | null }[] = [];
   let updated = 0;
 
@@ -242,6 +244,7 @@ export async function applyAggregateStock(items: StockItemInput[]) {
 export async function replaceLocationStock(
   locations: { code: LocationCode; items: StockItemInput[] }[]
 ) {
+  await bindHvoyaCatalog();
   return prisma.$transaction(async (tx) => {
     const result: { code: LocationCode; shortName: string; quantity: number; items: number }[] = [];
     const skus: string[] = [];
@@ -309,6 +312,7 @@ export async function readLocationStock() {
 export async function applyOperation(input: OperationInput) {
   const validationError = validateOperation(input);
   if (validationError) throw new HvoyaSyncError(validationError, 400);
+  await bindHvoyaCatalog();
 
   try {
     return await prisma.$transaction(async (tx) => {

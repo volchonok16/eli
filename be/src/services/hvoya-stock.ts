@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { config } from "../config.js";
 import { prisma } from "../db/prisma.js";
+import { bindHvoyaCatalog } from "./hvoya-catalog.js";
 
 const stockItemSchema = z.object({
   sku: z.string().min(1),
@@ -56,8 +57,20 @@ async function applyStock(): Promise<number> {
   trackedSkus.clear();
   for (const sku of bySku.keys()) trackedSkus.add(sku);
 
+  await bindHvoyaCatalog();
+
+  const skus = [...bySku.keys()];
+  const locationSums = await prisma.salePointStock.groupBy({
+    by: ["sku"],
+    where: { sku: { in: skus } },
+    _sum: { quantity: true },
+  });
+  const quantityBySku = new Map(
+    locationSums.map((row) => [row.sku, row._sum.quantity ?? 0])
+  );
+
   const products = await prisma.product.findMany({
-    where: { sku: { in: [...bySku.keys()] } },
+    where: { sku: { in: skus } },
     select: { id: true, sku: true, quantity: true, inStock: true },
   });
 
@@ -67,12 +80,15 @@ async function applyStock(): Promise<number> {
     const item = bySku.get(product.sku);
     if (!item) continue;
 
-    const inStock = item.available && item.quantity > 0;
-    if (product.quantity === item.quantity && product.inStock === inStock) continue;
+    const quantity = quantityBySku.has(product.sku)
+      ? quantityBySku.get(product.sku) ?? 0
+      : item.quantity;
+    const inStock = quantity > 0;
+    if (product.quantity === quantity && product.inStock === inStock) continue;
 
     await prisma.product.update({
       where: { id: product.id },
-      data: { quantity: item.quantity, inStock },
+      data: { quantity, inStock },
     });
     updated += 1;
   }
