@@ -106,6 +106,14 @@ export function createOpenApiDocument(apiUrl: string) {
         ["/api/orders/{id}/status", { get: { summary: "Статус заказа" }, patch: { summary: "Сменить статус", secured: true } }],
         ["/api/orders/{id}/cancel", { post: { summary: "Отменить заказ", secured: true } }],
       ]),
+      ...routes("Хвоя", [
+        ["/api/hvoya/auth/request-code", { post: { summary: "Отправить суточный код на почту" } }],
+        ["/api/hvoya/auth/confirm", { post: { summary: "Подтвердить код и получить токен на 24 часа" } }],
+        ["/api/hvoya/auth/status", { get: { summary: "Статус суточного доступа" } }],
+        ["/api/hvoya/stock", { put: { summary: "Общий остаток по SKU" } }],
+        ["/api/hvoya/locations/stock", { get: { summary: "Остатки по точкам" }, put: { summary: "Заменить остатки по точкам" } }],
+        ["/api/hvoya/operations", { post: { summary: "Поставка, продажа, отмена, перемещение или корректировка" } }],
+      ]),
       ...routes("Точки продаж", [
         ["/api/sale-points", { get: { summary: "Список точек" }, post: { summary: "Создать точку", secured: true } }],
         ["/api/sale-points/{id}", { get: { summary: "Детали точки" }, put: { summary: "Обновить", secured: true }, delete: { summary: "Удалить", secured: true } }],

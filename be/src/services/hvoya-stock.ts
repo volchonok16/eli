@@ -22,6 +22,12 @@ export function isHvoyaTrackedSku(sku: string | null | undefined): boolean {
   return Boolean(sku && trackedSkus.has(sku));
 }
 
+export function rememberHvoyaSkus(skus: Iterable<string>): void {
+  for (const sku of skus) {
+    if (sku) trackedSkus.add(sku);
+  }
+}
+
 function nextDelayMs(refreshAfterSeconds?: number): number {
   const seconds = refreshAfterSeconds ?? 30;
   return Math.min(300, Math.max(15, seconds)) * 1000;

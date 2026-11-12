@@ -161,10 +161,47 @@ model SalePoint {
   workingHours Json?
   imageKey     String?
   isActive     Boolean   @default(true)
+  code         String?   @unique
+  quantity     Int       @default(0)
   products     Product[]
   orders       Order[]
+  stocks       SalePointStock[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model SalePointStock {
+  id          String    @id @default(uuid())
+  salePointId String
+  salePoint   SalePoint @relation(fields: [salePointId], references: [id], onDelete: Cascade)
+  sku         String
+  quantity    Int       @default(0)
+  kind        String?
+  name        String?
+  variant     String?
+  grade       String?
+  unit        String?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([salePointId, sku])
+}
+
+model HvoyaAccess {
+  id          String    @id
+  codeHash    String?
+  codeSentAt  DateTime?
+  attempts    Int       @default(0)
+  tokenHash   String?
+  confirmedAt DateTime?
+  expiresAt   DateTime?
+  updatedAt   DateTime  @updatedAt
+}
+
+model HvoyaOperation {
+  id        String   @id
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
 }
 
 model DeliveryZone {

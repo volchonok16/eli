@@ -21,6 +21,7 @@ import { wholesaleRouter } from "./routes/wholesale.js";
 import { cpRequestsRouter } from "./routes/cp-requests.js";
 import { partnerApplicationsRouter } from "./routes/partner-applications.js";
 import { newsletterRouter } from "./routes/newsletter.js";
+import { hvoyaRouter } from "./routes/hvoya.js";
 
 export function createApp() {
   const app = express();
@@ -74,6 +75,7 @@ export function createApp() {
   app.use("/api/cp-requests", cpRequestsRouter);
   app.use("/api/partner-applications", partnerApplicationsRouter);
   app.use("/api/newsletter", newsletterRouter);
+  app.use("/api/hvoya", hvoyaRouter);
   app.use("/api/webhooks", webhooksRouter);
   registerFilesRoute(app);
 

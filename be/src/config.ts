@@ -75,8 +75,16 @@ export const config = {
 
   hvoyaStockUrl: optional(
     "HVOYA_STOCK_URL",
-    "https://hvoya-tochki.ru/api/public/v1/stock"
+    "https://hvoyvoy.ru/api/public/v1/stock"
   ),
+  hvoyaIntegrationKey: optional("HVOYA_INTEGRATION_KEY"),
+  hvoyaSmtp: {
+    host: optional("HVOYA_SMTP_HOST", "smtp.yandex.ru"),
+    port: parseInt(optional("HVOYA_SMTP_PORT", "465"), 10),
+    user: optional("HVOYA_SMTP_USER"),
+    pass: optional("HVOYA_SMTP_PASS"),
+    to: optional("HVOYA_OTP_TO"),
+  },
 };
 
 export function assertProductionSecrets(): void {
