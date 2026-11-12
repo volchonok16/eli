@@ -3,13 +3,37 @@ type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 interface EndpointOptions {
   summary: string;
   secured?: boolean;
+  hvoyaKey?: boolean;
+  body?: Record<string, unknown>;
 }
 
-function endpoint(tag: string, { summary, secured = false }: EndpointOptions) {
+const hvoyaKeyParameter = {
+  name: "X-Hvoya-Key",
+  in: "header",
+  required: true,
+  description: "Значение HVOYA_INTEGRATION_KEY с сервера",
+  schema: { type: "string", example: "вставьте ключ из HVOYA_INTEGRATION_KEY" },
+};
+
+function endpoint(
+  tag: string,
+  { summary, secured = false, hvoyaKey = false, body }: EndpointOptions
+) {
   return {
     summary,
     tags: [tag],
     ...(secured ? { security: [{ bearerAuth: [] }] } : {}),
+    ...(hvoyaKey ? { parameters: [hvoyaKeyParameter] } : {}),
+    ...(body
+      ? {
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": { schema: body },
+            },
+          },
+        }
+      : {}),
     responses: {
       "200": { description: "Успешный ответ" },
       "201": { description: "Создано" },
@@ -54,6 +78,21 @@ export function createOpenApiDocument(apiUrl: string) {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
+        },
+      },
+      schemas: {
+        HvoyaStockItem: {
+          type: "object",
+          required: ["sku", "quantity"],
+          properties: {
+            sku: { type: "string", example: "nordman:4" },
+            quantity: { type: "integer", minimum: 0, example: 12 },
+            name: { type: "string", example: "Пихта Нордмана" },
+            kind: { type: "string", enum: ["tree", "bough", "stand"], example: "tree" },
+            variant: { type: "string", example: "200–225 см" },
+            grade: { type: "string", example: "Стандарт" },
+            unit: { type: "string", example: "шт." },
+          },
         },
       },
     },
@@ -107,12 +146,115 @@ export function createOpenApiDocument(apiUrl: string) {
         ["/api/orders/{id}/cancel", { post: { summary: "Отменить заказ", secured: true } }],
       ]),
       ...routes("Хвоя", [
-        ["/api/hvoya/auth/request-code", { post: { summary: "Отправить суточный код на почту" } }],
-        ["/api/hvoya/auth/confirm", { post: { summary: "Подтвердить код и получить токен на 24 часа" } }],
-        ["/api/hvoya/auth/status", { get: { summary: "Статус суточного доступа" } }],
-        ["/api/hvoya/stock", { put: { summary: "Общий остаток по SKU" } }],
-        ["/api/hvoya/locations/stock", { get: { summary: "Остатки по точкам" }, put: { summary: "Заменить остатки по точкам" } }],
-        ["/api/hvoya/operations", { post: { summary: "Поставка, продажа, отмена, перемещение или корректировка" } }],
+        ["/api/hvoya/auth/request-code", { post: { summary: "Отправить суточный код на почту", hvoyaKey: true } }],
+        ["/api/hvoya/auth/confirm", {
+          post: {
+            summary: "Подтвердить код и получить токен на 24 часа",
+            hvoyaKey: true,
+            body: {
+              type: "object",
+              required: ["code"],
+              properties: {
+                code: {
+                  type: "string",
+                  description: "Шестизначный код из письма",
+                  example: "123456",
+                  minLength: 6,
+                  maxLength: 6,
+                },
+              },
+            },
+          },
+        }],
+        ["/api/hvoya/auth/status", { get: { summary: "Статус суточного доступа", hvoyaKey: true } }],
+        ["/api/hvoya/stock", {
+          put: {
+            summary: "Общий остаток по SKU",
+            hvoyaKey: true,
+            secured: true,
+            body: {
+              type: "object",
+              required: ["items"],
+              properties: {
+                items: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/HvoyaStockItem" },
+                },
+              },
+            },
+          },
+        }],
+        ["/api/hvoya/locations/stock", {
+          get: { summary: "Остатки по точкам", hvoyaKey: true, secured: true },
+          put: {
+            summary: "Заменить остатки по точкам",
+            hvoyaKey: true,
+            secured: true,
+            body: {
+              type: "object",
+              required: ["locations"],
+              properties: {
+                locations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["code", "items"],
+                    properties: {
+                      code: {
+                        type: "string",
+                        enum: ["lapino", "vnukovo", "riga", "rogozino"],
+                      },
+                      items: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/HvoyaStockItem" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }],
+        ["/api/hvoya/operations", {
+          post: {
+            summary: "Поставка, продажа, отмена, перемещение или корректировка",
+            hvoyaKey: true,
+            secured: true,
+            body: {
+              type: "object",
+              required: ["id", "type", "items"],
+              properties: {
+                id: { type: "string", example: "sale-1001" },
+                type: {
+                  type: "string",
+                  enum: [
+                    "supply",
+                    "sale",
+                    "sale_cancel",
+                    "sale_correction",
+                    "transfer",
+                    "transfer_cancel",
+                    "adjustment",
+                  ],
+                },
+                channel: { type: "string", enum: ["offline", "online"] },
+                payment: { type: "string", enum: ["cash", "cashless"] },
+                locationCode: { type: "string", enum: ["lapino", "vnukovo", "riga", "rogozino"] },
+                sourceLocationCode: { type: "string", enum: ["lapino", "vnukovo", "riga", "rogozino"] },
+                targetLocationCode: { type: "string", enum: ["lapino", "vnukovo", "riga", "rogozino"] },
+                previousLocationCode: { type: "string", enum: ["lapino", "vnukovo", "riga", "rogozino"] },
+                items: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/HvoyaStockItem" },
+                },
+                previousItems: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/HvoyaStockItem" },
+                },
+              },
+            },
+          },
+        }],
       ]),
       ...routes("Точки продаж", [
         ["/api/sale-points", { get: { summary: "Список точек" }, post: { summary: "Создать точку", secured: true } }],
