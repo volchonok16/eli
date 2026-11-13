@@ -57,7 +57,7 @@ export const config = {
     customerCode: optional("TOCHKA_CUSTOMER_CODE"),
     webhookSecret: optional("TOCHKA_WEBHOOK_SECRET"),
     merchantId: optional("TOCHKA_MERCHANT_ID"),
-    paymentModes: optional("TOCHKA_PAYMENT_MODES", "card")
+    paymentModes: optional("TOCHKA_PAYMENT_MODES", "card,sbp,tinkoff,dolyame")
       .split(",")
       .map((mode) => mode.trim())
       .filter(Boolean),
