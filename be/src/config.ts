@@ -61,6 +61,8 @@ export const config = {
       .split(",")
       .map((mode) => mode.trim())
       .filter(Boolean),
+    taxSystemCode: optional("TOCHKA_TAX_SYSTEM_CODE", "usn_income"),
+    vatType: optional("TOCHKA_VAT_TYPE", "none"),
   },
 
   telegram: {

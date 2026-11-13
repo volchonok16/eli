@@ -232,6 +232,15 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       amount: Number(totalAmount.toFixed(2)),
       purpose: `Оплата заказа ${order.id}`,
       paymentLinkId,
+      customerEmail: order.customerEmail,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      deliveryCost,
+      items: order.items.map((item) => ({
+        name: item.product.name,
+        price: Number(item.price),
+        quantity: item.quantity,
+      })),
     });
 
     const updated = await prisma.order.update({

@@ -5,10 +5,21 @@ import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 import { config } from "../config.js";
 
+interface PaymentItem {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 interface CreatePaymentParams {
   amount: number;
   purpose: string;
   paymentLinkId: string;
+  customerEmail?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  items: PaymentItem[];
+  deliveryCost?: number;
   redirectUrl?: string;
   failRedirectUrl?: string;
 }
@@ -107,7 +118,7 @@ function parseTochkaError(text: string): string {
       json.Errors?.[0]?.message ??
       json.Errors?.[0]?.error ??
       json.meta?.response?.errors?.[0]?.message;
-    return json.message || json.error || nested || text;
+    return nested || json.message || json.error || text;
   } catch {
     return text;
   }
@@ -128,15 +139,49 @@ export class TochkaService {
       );
     }
 
+    const email = params.customerEmail?.trim();
+    if (!email) {
+      throw new TochkaServiceError("Укажите email: на него Точка отправит кассовый чек", 400);
+    }
+
+    const money = (value: number) => value.toFixed(2);
+    const receiptItems = params.items.map((item) => ({
+      name: item.name.slice(0, 128),
+      amount: money(item.price),
+      quantity: item.quantity,
+      vatType: config.tochka.vatType,
+      paymentMethod: "full_prepayment",
+      paymentObject: "goods",
+      measure: "шт.",
+    }));
+    if (params.deliveryCost && params.deliveryCost > 0) {
+      receiptItems.push({
+        name: "Доставка",
+        amount: money(params.deliveryCost),
+        quantity: 1,
+        vatType: config.tochka.vatType,
+        paymentMethod: "full_prepayment",
+        paymentObject: "service",
+        measure: "шт.",
+      });
+    }
+
+    const client: Record<string, string> = { email };
+    if (params.customerName?.trim()) client.name = params.customerName.trim();
+    if (params.customerPhone?.trim()) client.phone = params.customerPhone.trim();
+
     const payload: Record<string, unknown> = {
       customerCode: config.tochka.customerCode,
-      amount: Number(params.amount.toFixed(2)),
+      amount: money(params.amount),
       purpose: params.purpose,
       paymentLinkId: params.paymentLinkId,
       paymentMode: config.tochka.paymentModes,
       redirectUrl: params.redirectUrl ?? `${config.feUrl}/payment/success`,
       failRedirectUrl:
         params.failRedirectUrl ?? `${config.feUrl}/payment/fail`,
+      taxSystemCode: config.tochka.taxSystemCode,
+      Client: client,
+      Items: receiptItems,
     };
 
     if (config.tochka.merchantId) {
@@ -146,7 +191,7 @@ export class TochkaService {
     let response: Awaited<ReturnType<typeof tochkaRequest>>;
     try {
       response = await tochkaRequest(
-        `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments`,
+        `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments_with_receipt`,
         {
           method: "POST",
           headers: {
@@ -166,6 +211,7 @@ export class TochkaService {
 
     if (!response.ok) {
       const text = await response.text();
+      console.warn(`Точка: платёж с чеком отклонён (${response.status}) ${text.slice(0, 500)}`);
       throw new TochkaServiceError(
         `Не удалось создать платёж: ${parseTochkaError(text)}`,
         response.status
