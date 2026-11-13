@@ -14,6 +14,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { WholesalePage } from '@/pages/WholesalePage';
 import { SalePointsPage } from '@/pages/SalePointsPage';
 import { PartnersPage } from '@/pages/PartnersPage';
+import { PaymentFailPage, PaymentSuccessPage } from '@/pages/PaymentPage';
 
 export const App = () => (
   <div className="flex min-h-screen flex-col">
@@ -25,6 +26,8 @@ export const App = () => (
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

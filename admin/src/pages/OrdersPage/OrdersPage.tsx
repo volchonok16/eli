@@ -3,7 +3,7 @@ import { OrderTable } from "./ui/OrderTable";
 import { formatRub } from "@/shared/utils/formatDate";
 
 export function OrdersPage() {
-  const { data, loading, error, changeStatus, cancel, STATUS_LABELS, STATUS_FLOW } = useOrders();
+  const { data, loading, error, busyId, changeStatus, cancel, STATUS_FLOW } = useOrders();
 
   const totalPaid = data
     .filter((o) => o.status === "PAID" || o.status === "PROCESSING" || o.status === "ASSEMBLED" || o.status === "DELIVERING" || o.status === "COMPLETED")
@@ -39,8 +39,8 @@ export function OrdersPage() {
         {!loading && data.length > 0 && (
           <OrderTable
             orders={data}
-            labels={STATUS_LABELS}
             flow={STATUS_FLOW}
+            busyId={busyId}
             onChangeStatus={changeStatus}
             onCancel={cancel}
           />

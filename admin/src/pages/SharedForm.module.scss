@@ -22,13 +22,27 @@
 }
 
 .statusActions {
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .statusBtn {
+  font-size: 13px;
+  padding: 6px 12px;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.cancelBox {
+  max-width: 260px;
+}
+
+.cancelNote {
+  margin: 0 0 8px;
+  color: #57534E;
   font-size: 12px;
-  padding: 4px 10px;
+  line-height: 1.45;
 }
 
 .cancelInput {

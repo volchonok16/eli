@@ -90,6 +90,9 @@ export const ordersApi = {
   getStatus: (id: string) =>
     apiClient.get<OrderStatusResult>(`/orders/${id}/status`).then((r) => r.data),
 
+  confirmPayment: (id: string) =>
+    apiClient.post<OrderStatusResult>(`/webhooks/tochka/confirm/${id}`).then((r) => r.data),
+
   updateStatus: (id: string, status: OrderStatus, managerNote?: string) =>
     apiClient.patch<OrderResponse>(`/orders/${id}/status`, { status, managerNote }).then((r) => r.data),
 

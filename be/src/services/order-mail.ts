@@ -17,6 +17,7 @@ export interface OrderFormedMail {
   deliveryLabel?: string | null;
   paymentLink?: string | null;
   createdAt?: Date;
+  paid?: boolean;
 }
 
 function escapeHtml(text: string): string {
@@ -121,9 +122,9 @@ function renderOrderFormedEmail(mail: OrderFormedMail): { html: string; text: st
           </tr>
           <tr>
             <td style="padding:36px 40px 8px;">
-              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#CA8A04;">Заказ сформирован</p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#CA8A04;">${mail.paid ? "Оплата получена" : "Заказ сформирован"}</p>
               <h1 style="margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:32px;line-height:1.15;color:#1C1917;">${escapeHtml(greeting)}</h1>
-              <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#44403C;">Мы приняли заказ и собрали его состав. Оплатите его, и мы начнём подготовку к выдаче или доставке.</p>
+              <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#44403C;">${mail.paid ? "Оплата прошла. Сохраните номер заказа: по нему мы подготовим ёлку. Кассовый чек Точка отправит отдельным письмом." : "Мы приняли заказ и собрали его состав. Оплатите его, и мы начнём подготовку к выдаче или доставке."}</p>
             </td>
           </tr>
           <tr>
@@ -165,7 +166,7 @@ function renderOrderFormedEmail(mail: OrderFormedMail): { html: string; text: st
               <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:18px;color:#FAFAF9;">Eli</p>
               <p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#A8A29E;">
                 <a href="${escapeHtml(shopUrl)}" style="color:#EAB308;text-decoration:none;">премиумель.рф</a><br>
-                Письмо отправлено, потому что вы оформили заказ на сайте.
+                ${mail.paid ? "Письмо отправлено, потому что заказ оплачен." : "Письмо отправлено, потому что вы оформили заказ на сайте."}
               </p>
             </td>
           </tr>
@@ -180,7 +181,7 @@ function renderOrderFormedEmail(mail: OrderFormedMail): { html: string; text: st
     "Eli — живые новогодние ёлки",
     "",
     `${greeting}.`,
-    "Ваш заказ сформирован.",
+    mail.paid ? "Заказ оплачен." : "Ваш заказ сформирован.",
     `Номер: ${number}`,
     `Дата: ${date}`,
     mail.deliveryLabel ?? "",
@@ -199,13 +200,98 @@ function renderOrderFormedEmail(mail: OrderFormedMail): { html: string; text: st
   return { html, text: textLines.join("\n") };
 }
 
-export async function notifyOrderFormed(mail: OrderFormedMail): Promise<void> {
-  const smtp = config.hvoyaSmtp;
-  if (!mail.to || !smtp.user || !smtp.pass) {
-    return;
-  }
+export interface OrderStatusMail {
+  to: string;
+  customerName?: string | null;
+  orderId: string;
+  subject: string;
+  eyebrow: string;
+  lead: string;
+  createdAt?: Date;
+}
 
-  const { html, text } = renderOrderFormedEmail(mail);
+function renderOrderStatusEmail(mail: OrderStatusMail): { html: string; text: string } {
+  const number = orderNumber(mail.orderId);
+  const name = mail.customerName?.trim();
+  const greeting = name ? `Здравствуйте, ${name}` : "Здравствуйте";
+  const date = formatDate(mail.createdAt ?? new Date());
+  const shopUrl = config.feUrl.replace(/\/$/, "");
+
+  const html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHtml(mail.subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F4;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#FAFAF9;">
+          <tr>
+            <td style="background:#1C1917;padding:36px 40px 28px;">
+              <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:36px;line-height:1;color:#FAFAF9;">Eli</p>
+              <p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#CA8A04;">Живые новогодние ёлки</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#CA8A04;height:3px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:36px 40px 12px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#CA8A04;">${escapeHtml(mail.eyebrow)}</p>
+              <h1 style="margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:32px;line-height:1.15;color:#1C1917;">${escapeHtml(greeting)}</h1>
+              <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#44403C;">${escapeHtml(mail.lead)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 36px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#78716C;">Номер заказа</p>
+              <p style="margin:6px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#1C1917;">№ ${number}</p>
+              <p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#78716C;">${escapeHtml(date)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#1C1917;padding:28px 40px;">
+              <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:18px;color:#FAFAF9;">Eli</p>
+              <p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#A8A29E;">
+                <a href="${escapeHtml(shopUrl)}" style="color:#EAB308;text-decoration:none;">премиумель.рф</a><br>
+                Письмо отправлено, потому что статус заказа изменился.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const text = [
+    "Eli — живые новогодние ёлки",
+    "",
+    `${greeting}.`,
+    mail.lead,
+    `Номер заказа: ${number}`,
+    `Дата: ${date}`,
+    "",
+    shopUrl,
+  ].join("\n");
+
+  return { html, text };
+}
+
+async function sendShopMail(
+  orderId: string,
+  to: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<void> {
+  const smtp = config.hvoyaSmtp;
+  if (!to || !smtp.user || !smtp.pass) return;
+
   const transporter = nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port,
@@ -216,13 +302,33 @@ export async function notifyOrderFormed(mail: OrderFormedMail): Promise<void> {
   try {
     await transporter.sendMail({
       from: `"Eli" <${smtp.user}>`,
-      to: mail.to,
-      subject: "Ваш заказ сформирован — Eli",
+      to,
+      subject,
       text,
       html,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Заказ ${mail.orderId}: не удалось отправить письмо (${message})`);
+    console.warn(`Заказ ${orderId}: не удалось отправить письмо (${message})`);
   }
+}
+
+export async function notifyOrderFormed(mail: OrderFormedMail): Promise<void> {
+  const { html, text } = renderOrderFormedEmail(mail);
+  await sendShopMail(
+    mail.orderId,
+    mail.to,
+    mail.paid ? "Заказ оплачен — Eli" : "Ваш заказ сформирован — Eli",
+    html,
+    text
+  );
+}
+
+export async function notifyOrderStatusMail(mail: OrderStatusMail): Promise<void> {
+  const { html, text } = renderOrderStatusEmail(mail);
+  await sendShopMail(mail.orderId, mail.to, mail.subject, html, text);
+}
+
+export function notifyOrderPaidMail(mail: Omit<OrderFormedMail, "paid" | "paymentLink">): Promise<void> {
+  return notifyOrderFormed({ ...mail, paid: true });
 }

@@ -272,6 +272,58 @@ export class TochkaService {
 
     return data.Data?.status ?? "unknown";
   }
+
+  async refundPayment(operationId: string, amount: number): Promise<void> {
+    if (!this.isConfigured) {
+      throw new TochkaServiceError("Точка Банк не настроен", 502);
+    }
+
+    if (!operationId || amount <= 0) {
+      throw new TochkaServiceError("Нечего возвращать: у заказа нет платежа", 409);
+    }
+
+    let response: Awaited<ReturnType<typeof tochkaRequest>>;
+    try {
+      response = await tochkaRequest(
+        `${config.tochka.baseUrl}/uapi/acquiring/v1.0/payments/${encodeURIComponent(operationId)}/refund`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.tochka.accessToken}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ Data: { amount: amount.toFixed(2) } }),
+        }
+      );
+    } catch (error) {
+      throw new TochkaServiceError(
+        `Не удалось связаться с Точка Банк: ${formatNetworkError(error)}`,
+        502
+      );
+    }
+
+    const text = await response.text();
+    if (!response.ok) {
+      console.warn(`Точка: возврат отклонён (${response.status}) ${text.slice(0, 500)}`);
+      throw new TochkaServiceError(
+        `Не удалось вернуть оплату: ${parseTochkaError(text)}`,
+        response.status
+      );
+    }
+
+    let refunded = true;
+    try {
+      const data = JSON.parse(text) as { Data?: { isRefund?: boolean } };
+      if (data.Data && data.Data.isRefund === false) refunded = false;
+    } catch {
+      refunded = true;
+    }
+
+    if (!refunded) {
+      throw new TochkaServiceError("Точка Банк не подтвердил возврат", 502);
+    }
+  }
 }
 
 export const tochkaService = new TochkaService();

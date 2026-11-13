@@ -2,32 +2,31 @@ import { useCallback, useEffect, useState } from "react";
 import { getOrders, updateOrderStatus, cancelOrder } from "@/api/endpoints/orders";
 import type { Order, OrderStatus } from "@/api/types";
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: "Ожидает оплаты",
-  PAID: "Оплачен",
-  PROCESSING: "В обработке",
-  ASSEMBLED: "Собран",
-  DELIVERING: "Доставляется",
-  COMPLETED: "Выполнен",
-  CANCELLED: "Отменён",
-  FAILED: "Ошибка",
-};
-
 const STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ["CANCELLED"],
   PAID: ["PROCESSING", "CANCELLED"],
   PROCESSING: ["ASSEMBLED", "CANCELLED"],
   ASSEMBLED: ["DELIVERING", "CANCELLED"],
-  DELIVERING: ["COMPLETED"],
-  COMPLETED: [],
+  DELIVERING: ["COMPLETED", "CANCELLED"],
+  COMPLETED: ["CANCELLED"],
   CANCELLED: [],
   FAILED: [],
 };
+
+export function actionLabel(status: OrderStatus, deliveryType: "SELF_PICKUP" | "COURIER" | null): string {
+  if (status === "DELIVERING") return deliveryType === "SELF_PICKUP" ? "К выдаче" : "В пути";
+  if (status === "COMPLETED") return deliveryType === "SELF_PICKUP" ? "Выдан" : "Доставлен";
+  if (status === "PROCESSING") return "В работу";
+  if (status === "ASSEMBLED") return "Собран";
+  if (status === "CANCELLED") return "Отменить";
+  return status;
+}
 
 export function useOrders() {
   const [data, setData] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -37,16 +36,33 @@ export function useOrders() {
   }, []);
 
   const changeStatus = useCallback(async (id: string, status: OrderStatus) => {
-    const updated = await updateOrderStatus(id, status);
-    setData((prev) => prev.map((o) => (o.id === id ? updated : o)));
+    setBusyId(id);
+    try {
+      const updated = await updateOrderStatus(id, status);
+      setData((prev) => prev.map((o) => (o.id === id ? updated : o)));
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось сменить статус");
+    } finally {
+      setBusyId(null);
+    }
   }, []);
 
   const cancel = useCallback(async (id: string, reason: string) => {
-    const updated = await cancelOrder(id, reason);
-    setData((prev) => prev.map((o) => (o.id === id ? updated : o)));
+    setBusyId(id);
+    try {
+      const updated = await cancelOrder(id, reason);
+      setData((prev) => prev.map((o) => (o.id === id ? updated : o)));
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось отменить заказ");
+      throw e;
+    } finally {
+      setBusyId(null);
+    }
   }, []);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { data, loading, error, refetch: fetch, changeStatus, cancel, STATUS_LABELS, STATUS_FLOW };
+  return { data, loading, error, busyId, refetch: fetch, changeStatus, cancel, STATUS_FLOW };
 }

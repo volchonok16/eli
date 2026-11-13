@@ -77,12 +77,14 @@ export async function notifyNewFeedback(feedback: {
 
 export async function notifyCancellation(
   orderId: string,
-  reason: string
+  reason: string,
+  refunded = false
 ): Promise<void> {
   const text =
     `<b>Заказ отменён</b>\n` +
     `ID: <code>${orderId}</code>\n` +
-    `Причина: ${escapeHtml(reason)}`;
+    `Причина: ${escapeHtml(reason)}` +
+    (refunded ? `\nВозврат через Точку оформлен` : "");
 
   await sendTelegramMessage(text);
 }

@@ -3,12 +3,13 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { DeliveryType, OrderStatus } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
+import { config } from "../config.js";
 import { tochkaService, TochkaServiceError } from "../services/tochka.js";
 import { notifyNewOrder } from "../services/telegram.js";
 import { notifyNewOrderMax } from "../services/max.js";
 import { notifyOrderFormed } from "../services/order-mail.js";
+import { advanceOrderStatus, cancelShopOrder, OrderFlowError } from "../services/order.js";
 import {
-  cancelOrder,
   getCartReservedUntil,
   getPaymentExpiresAt,
   releaseOrderReservation,
@@ -54,16 +55,25 @@ function zodErrorMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Некорректные данные заказа";
 }
 
-const statusLabels: Record<OrderStatus, string> = {
-  PENDING: "Ожидает оплаты",
-  PAID: "Оплачен",
-  PROCESSING: "В обработке",
-  ASSEMBLED: "Собран",
-  DELIVERING: "Доставляется",
-  COMPLETED: "Выполнен",
-  CANCELLED: "Отменён",
-  FAILED: "Ошибка",
-};
+function statusLabel(status: OrderStatus, deliveryType: DeliveryType | null): string {
+  if (status === OrderStatus.DELIVERING) {
+    return deliveryType === DeliveryType.SELF_PICKUP ? "Готов к выдаче" : "В пути";
+  }
+  if (status === OrderStatus.COMPLETED) {
+    return deliveryType === DeliveryType.SELF_PICKUP ? "Выдан" : "Доставлен";
+  }
+  const labels: Record<OrderStatus, string> = {
+    PENDING: "Ожидает оплаты",
+    PAID: "Оплачен",
+    PROCESSING: "В работе",
+    ASSEMBLED: "Собран",
+    DELIVERING: "В пути",
+    COMPLETED: "Доставлен",
+    CANCELLED: "Отменён",
+    FAILED: "Ошибка оплаты",
+  };
+  return labels[status];
+}
 
 function serializeOrderListItem(order: {
   id: string;
@@ -93,7 +103,7 @@ function serializeOrderListItem(order: {
   return {
     id: order.id,
     status: order.status,
-    statusLabel: statusLabels[order.status],
+    statusLabel: statusLabel(order.status, order.deliveryType),
     totalAmount: Number(order.totalAmount),
     deliveryType: order.deliveryType,
     deliveryCost: order.deliveryCost ? Number(order.deliveryCost) : null,
@@ -236,6 +246,8 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       customerName: order.customerName,
       customerPhone: order.customerPhone,
       deliveryCost,
+      redirectUrl: `${config.feUrl}/payment/success?order=${order.id}`,
+      failRedirectUrl: `${config.feUrl}/payment/fail?order=${order.id}`,
       items: order.items.map((item) => ({
         name: item.product.name,
         price: Number(item.price),
@@ -345,42 +357,42 @@ ordersRouter.patch("/:id/status", staffAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const existing = await prisma.order.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Заказ не найден" });
-    return;
+  try {
+    const order = await advanceOrderStatus(id, parsed.data.status, parsed.data.managerNote);
+    res.json(serializeOrderListItem(order));
+  } catch (error) {
+    if (error instanceof OrderFlowError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
   }
-
-  const order = await prisma.order.update({
-    where: { id },
-    data: {
-      status: parsed.data.status,
-      managerNote: parsed.data.managerNote ?? existing.managerNote,
-    },
-    include: {
-      items: { include: { product: true } },
-      salePoint: { select: { id: true, shortName: true } },
-    },
-  });
-
-  res.json(serializeOrderListItem(order));
 });
 
 ordersRouter.post("/:id/cancel", staffAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = z.object({ reason: z.string().min(1) }).safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: "Укажите причину отмены" });
     return;
   }
 
-  const existing = await prisma.order.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Заказ не найден" });
+  const reason = parsed.data.reason.trim();
+  if (!reason) {
+    res.status(400).json({ error: "Укажите причину отмены" });
     return;
   }
 
-  await cancelOrder(id, parsed.data.reason);
+  try {
+    await cancelShopOrder(id, reason);
+  } catch (error) {
+    if (error instanceof OrderFlowError || error instanceof TochkaServiceError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   const order = await prisma.order.findUniqueOrThrow({
     where: { id },
     include: {

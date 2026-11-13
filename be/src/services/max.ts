@@ -71,9 +71,12 @@ export async function notifyNewFeedbackMax(feedback: {
 
 export async function notifyCancellationMax(
   orderId: string,
-  reason: string
+  reason: string,
+  refunded = false
 ): Promise<void> {
-  const text = `Заказ отменён\nID: ${orderId}\nПричина: ${reason}`;
+  const text =
+    `Заказ отменён\nID: ${orderId}\nПричина: ${reason}` +
+    (refunded ? `\nВозврат через Точку оформлен` : "");
   await sendMaxMessage(text);
 }
 
