@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
+import { handleApiError } from '@/api/errorHandler';
 import { useCreateOrder } from './hooks/useCheckout';
 import { useCart } from '@/pages/CartPage/useCart';
 import styles from './CheckoutPage.module.css';
@@ -51,7 +52,7 @@ export const CheckoutPage = () => {
           }
         },
         onError: (err) => {
-          setError(err instanceof Error ? err.message : 'Ошибка при создании заказа');
+          setError(handleApiError(err));
         },
       },
     );
@@ -131,8 +132,8 @@ export const CheckoutPage = () => {
                       className="accent-accent"
                     />
                     <div>
-                      <p className="font-medium text-primary">Курьерская доставка</p>
-                      <p className="text-sm text-text-muted">Стоимость рассчитывается по зонам</p>
+                      <p className="font-medium text-primary">Бережная доставка по Москве и области</p>
+                      <p className="text-sm text-text-muted">Занесём и установим</p>
                     </div>
                   </label>
                 </div>
@@ -141,14 +142,12 @@ export const CheckoutPage = () => {
               {delivery === 'courier' && (
                 <section className={`${styles.section} glass-panel`}>
                   <h2 className="font-serif text-xl text-primary mb-4">Адрес доставки</h2>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <input
-                      className="input-field sm:col-span-2"
-                      placeholder="Адрес"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                    />
-                  </div>
+                  <input
+                    className="input-field"
+                    placeholder="Адрес"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
                 </section>
               )}
             </div>

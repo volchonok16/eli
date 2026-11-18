@@ -56,6 +56,13 @@ export const config = {
     accessToken: optional("TOCHKA_ACCESS_TOKEN"),
     customerCode: optional("TOCHKA_CUSTOMER_CODE"),
     webhookSecret: optional("TOCHKA_WEBHOOK_SECRET"),
+    merchantId: optional("TOCHKA_MERCHANT_ID"),
+    paymentModes: optional("TOCHKA_PAYMENT_MODES", "card,sbp,tinkoff,dolyame")
+      .split(",")
+      .map((mode) => mode.trim())
+      .filter(Boolean),
+    taxSystemCode: optional("TOCHKA_TAX_SYSTEM_CODE", "usn_income"),
+    vatType: optional("TOCHKA_VAT_TYPE", "none"),
   },
 
   telegram: {
@@ -66,6 +73,19 @@ export const config = {
   max: {
     botToken: optional("MAX_BOT_TOKEN"),
     chatId: optional("MAX_CHAT_ID"),
+  },
+
+  hvoyaStockUrl: optional(
+    "HVOYA_STOCK_URL",
+    "https://hvoyvoy.ru/api/public/v1/stock"
+  ),
+  hvoyaIntegrationKey: optional("HVOYA_INTEGRATION_KEY"),
+  hvoyaSmtp: {
+    host: optional("HVOYA_SMTP_HOST", "smtp.yandex.ru"),
+    port: parseInt(optional("HVOYA_SMTP_PORT", "465"), 10),
+    user: optional("HVOYA_SMTP_USER"),
+    pass: optional("HVOYA_SMTP_PASS"),
+    to: optional("HVOYA_OTP_TO"),
   },
 };
 

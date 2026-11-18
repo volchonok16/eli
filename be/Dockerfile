@@ -14,10 +14,11 @@ RUN apk add --no-cache openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
+COPY certs ./certs
 COPY dist ./dist
 
 RUN npx prisma generate
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db execute --file prisma/ensure-guest-cart.sql || true; npx prisma db push --accept-data-loss && node dist/index.js"]

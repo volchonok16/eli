@@ -47,6 +47,8 @@ function serializeSalePoint(point: {
   workingHours: unknown;
   imageKey: string | null;
   isActive: boolean;
+  code: string | null;
+  quantity: number;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -62,6 +64,8 @@ function serializeSalePoint(point: {
     imageKey: point.imageKey,
     imageUrl: point.imageKey ? getImagePublicUrl(point.imageKey) : null,
     isActive: point.isActive,
+    code: point.code,
+    quantity: point.quantity,
     createdAt: point.createdAt,
     updatedAt: point.updatedAt,
   };

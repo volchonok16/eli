@@ -14,26 +14,29 @@ import { AboutPage } from '@/pages/AboutPage';
 import { WholesalePage } from '@/pages/WholesalePage';
 import { SalePointsPage } from '@/pages/SalePointsPage';
 import { PartnersPage } from '@/pages/PartnersPage';
+import { PaymentFailPage, PaymentSuccessPage } from '@/pages/PaymentPage';
 
 export const App = () => (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1 pt-[var(--header-height,66px)]">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/catalog" element={<CatalogPage />} />
-          <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/wholesale" element={<WholesalePage />} />
-          <Route path="/bases" element={<SalePointsPage />} />
-          <Route path="/partners" element={<PartnersPage />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
-  );
+  <div className="flex min-h-screen flex-col">
+    <Header />
+    <main className="flex-1 pt-[80px] sm:pt-[116px]">
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/fail" element={<PaymentFailPage />} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/wholesale" element={<WholesalePage />} />
+        <Route path="/bases" element={<SalePointsPage />} />
+        <Route path="/partners" element={<PartnersPage />} />
+      </Routes>
+    </main>
+    <Footer />
+  </div>
+);

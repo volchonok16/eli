@@ -1,16 +1,20 @@
 import { Router } from "express";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 import { prisma } from "../db/prisma.js";
+import { AuthRequest, softUserAuthMiddleware } from "../middleware/auth.js";
 import {
-  AuthRequest,
-  getUserId,
-  userAuthMiddleware,
-} from "../middleware/auth.js";
-import {
-  getOrCreateCart,
+  getOrCreateGuestCart,
+  getOrCreateUserCart,
   serializeCart,
 } from "../services/cart.js";
 import { paramId } from "../utils/params.js";
+import {
+  GUEST_CART_COOKIE,
+  clearGuestCartCookie,
+  readCookie,
+  setGuestCartCookie,
+} from "../utils/cookies.js";
 
 export const cartRouter = Router();
 
@@ -23,22 +27,33 @@ const updateItemSchema = z.object({
   quantity: z.coerce.number().int().positive(),
 });
 
-cartRouter.use(userAuthMiddleware);
+cartRouter.use(softUserAuthMiddleware);
+
+async function resolveCart(req: AuthRequest, res: { append: (name: string, value: string) => unknown }) {
+  if (req.auth && "userId" in req.auth) {
+    return getOrCreateUserCart(req.auth.userId);
+  }
+
+  const existingKey = readCookie(req, GUEST_CART_COOKIE);
+  const guestKey = existingKey || uuidv4();
+  if (!existingKey) {
+    setGuestCartCookie(res as Parameters<typeof setGuestCartCookie>[0], guestKey);
+  }
+  return getOrCreateGuestCart(guestKey);
+}
 
 cartRouter.get("/", async (req: AuthRequest, res) => {
-  const userId = getUserId(req);
-  const cart = await getOrCreateCart(userId);
+  const cart = await resolveCart(req, res);
   res.json(serializeCart(cart));
 });
 
 cartRouter.post("/items", async (req: AuthRequest, res) => {
   const parsed = addItemSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Некорректные данные" });
     return;
   }
 
-  const userId = getUserId(req);
   const product = await prisma.product.findUnique({
     where: { id: parsed.data.productId },
   });
@@ -53,7 +68,7 @@ cartRouter.post("/items", async (req: AuthRequest, res) => {
     return;
   }
 
-  const cart = await getOrCreateCart(userId);
+  const cart = await resolveCart(req, res);
   const existingItem = cart.items.find(
     (item) => item.productId === parsed.data.productId
   );
@@ -82,7 +97,7 @@ cartRouter.post("/items", async (req: AuthRequest, res) => {
     });
   }
 
-  const updated = await getOrCreateCart(userId);
+  const updated = await resolveCart(req, res);
   res.status(existingItem ? 200 : 201).json(serializeCart(updated));
 });
 
@@ -90,12 +105,11 @@ cartRouter.put("/items/:productId", async (req: AuthRequest, res) => {
   const productId = paramId(req.params.productId);
   const parsed = updateItemSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Некорректные данные" });
     return;
   }
 
-  const userId = getUserId(req);
-  const cart = await getOrCreateCart(userId);
+  const cart = await resolveCart(req, res);
   const item = cart.items.find((entry) => entry.productId === productId);
 
   if (!item) {
@@ -116,14 +130,13 @@ cartRouter.put("/items/:productId", async (req: AuthRequest, res) => {
     data: { quantity: parsed.data.quantity },
   });
 
-  const updated = await getOrCreateCart(userId);
+  const updated = await resolveCart(req, res);
   res.json(serializeCart(updated));
 });
 
 cartRouter.delete("/items/:productId", async (req: AuthRequest, res) => {
   const productId = paramId(req.params.productId);
-  const userId = getUserId(req);
-  const cart = await getOrCreateCart(userId);
+  const cart = await resolveCart(req, res);
   const item = cart.items.find((entry) => entry.productId === productId);
 
   if (!item) {
@@ -133,16 +146,18 @@ cartRouter.delete("/items/:productId", async (req: AuthRequest, res) => {
 
   await prisma.cartItem.delete({ where: { id: item.id } });
 
-  const updated = await getOrCreateCart(userId);
+  const updated = await resolveCart(req, res);
   res.json(serializeCart(updated));
 });
 
 cartRouter.delete("/", async (req: AuthRequest, res) => {
-  const userId = getUserId(req);
-  const cart = await getOrCreateCart(userId);
+  const cart = await resolveCart(req, res);
 
   await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  if (!req.auth || !("userId" in req.auth)) {
+    clearGuestCartCookie(res);
+  }
 
-  const updated = await getOrCreateCart(userId);
+  const updated = await resolveCart(req, res);
   res.json(serializeCart(updated));
 });

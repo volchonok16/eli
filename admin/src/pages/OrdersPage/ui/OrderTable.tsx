@@ -1,37 +1,64 @@
 import { useState } from "react";
 import type { Order, OrderStatus } from "@/api/types";
 import { formatLocal, formatRub } from "@/shared/utils/formatDate";
+import { actionLabel } from "../hooks/useOrders";
 import s from "../../SharedForm.module.scss";
 
-function statusBadge(status: OrderStatus) {
+const refundable = new Set<OrderStatus>(["PAID", "PROCESSING", "ASSEMBLED", "DELIVERING", "COMPLETED"]);
+
+function statusBadge(order: Order) {
   const map: Record<string, string> = {
-    PAID: "badge-success", PENDING: "badge-warning", FAILED: "badge-danger",
-    CANCELLED: "badge-danger", PROCESSING: "badge-success", ASSEMBLED: "badge-success",
-    DELIVERING: "badge-success", COMPLETED: "badge-success",
+    PAID: "badge-success",
+    PENDING: "badge-warning",
+    FAILED: "badge-danger",
+    CANCELLED: "badge-danger",
+    PROCESSING: "badge-hit",
+    ASSEMBLED: "badge-hit",
+    DELIVERING: "badge-success",
+    COMPLETED: "badge-success",
   };
-  return <span className={`badge ${map[status] ?? "badge-warning"}`}>{status}</span>;
+  return <span className={`badge ${map[order.status] ?? "badge-warning"}`}>{order.statusLabel}</span>;
+}
+
+function orderNumber(id: string) {
+  return id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
 interface OrderRowProps {
   order: Order;
-  labels: Record<OrderStatus, string>;
   flow: Record<OrderStatus, OrderStatus[]>;
+  busy: boolean;
   onChangeStatus: (id: string, status: OrderStatus) => void;
-  onCancel: (id: string, reason: string) => void;
+  onCancel: (id: string, reason: string) => Promise<void>;
 }
 
-function OrderRow({ order, labels, flow, onChangeStatus, onCancel }: OrderRowProps) {
+function OrderRow({ order, flow, busy, onChangeStatus, onCancel }: OrderRowProps) {
   const [showCancel, setShowCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const nextStatuses = flow[order.status] ?? [];
+  const nextStatuses = (flow[order.status] ?? []).filter((status) => status !== "CANCELLED");
+  const canCancel = (flow[order.status] ?? []).includes("CANCELLED");
+  const returnsMoney = refundable.has(order.status);
+
+  async function confirmCancel() {
+    const reason = cancelReason.trim();
+    if (!reason) return;
+    try {
+      await onCancel(order.id, reason);
+      setShowCancel(false);
+      setCancelReason("");
+    } catch {
+      setShowCancel(true);
+    }
+  }
 
   return (
     <tr>
       <td>{formatLocal(order.createdAt)}</td>
-      <td><code className="order-id">{order.id.slice(0, 8)}…</code></td>
+      <td><code className="order-id">№ {orderNumber(order.id)}</code></td>
       <td>
         {order.customerName && <div>{order.customerName}</div>}
         {order.customerPhone && <div className="text-muted">{order.customerPhone}</div>}
+        {order.customerEmail && <div className="text-muted">{order.customerEmail}</div>}
       </td>
       <td>
         <ul className="order-items-list">
@@ -42,22 +69,27 @@ function OrderRow({ order, labels, flow, onChangeStatus, onCancel }: OrderRowPro
       </td>
       <td>{order.deliveryType === "COURIER" ? "Доставка" : order.deliveryType === "SELF_PICKUP" ? "Самовывоз" : "—"}</td>
       <td>{formatRub(order.totalAmount)}</td>
-      <td>{statusBadge(order.status)}</td>
+      <td>{statusBadge(order)}</td>
       <td>
         {!showCancel ? (
           <div className={`actions ${s.statusActions}`}>
-            {nextStatuses
-              .filter((st) => st !== "CANCELLED")
-              .map((st) => (
-                <button key={st} className={`btn btn-secondary ${s.statusBtn}`}
-                  onClick={() => onChangeStatus(order.id, st)}>
-                  {labels[st]}
-                </button>
-              ))}
-            {nextStatuses.includes("CANCELLED") && (
-              <button className={`btn btn-danger ${s.statusBtn}`}
-                onClick={() => setShowCancel(true)}>
-                Отменить
+            {nextStatuses.map((status) => (
+              <button
+                key={status}
+                className={`btn btn-primary ${s.statusBtn}`}
+                disabled={busy}
+                onClick={() => onChangeStatus(order.id, status)}
+              >
+                {actionLabel(status, order.deliveryType)}
+              </button>
+            ))}
+            {canCancel && (
+              <button
+                className={`btn btn-secondary ${s.statusBtn}`}
+                disabled={busy}
+                onClick={() => setShowCancel(true)}
+              >
+                {returnsMoney ? "Вернуть деньги" : "Отменить"}
               </button>
             )}
             {order.cancelReason && (
@@ -65,17 +97,33 @@ function OrderRow({ order, labels, flow, onChangeStatus, onCancel }: OrderRowPro
             )}
           </div>
         ) : (
-          <div>
-            <input placeholder="Причина отмены" value={cancelReason}
+          <div className={s.cancelBox}>
+            <p className={s.cancelNote}>
+              {returnsMoney
+                ? "Отменим заказ и вернём всю сумму через Точку. На карту деньги обычно приходят за 3–7 дней, по СБП — быстрее."
+                : "Заказ ещё не оплачен, списывать нечего."}
+            </p>
+            <input
+              placeholder="Причина отмены"
+              value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              className={s.cancelInput} />
-            <div className="actions">
-              <button className={`btn btn-danger ${s.statusBtn}`}
-                onClick={() => { onCancel(order.id, cancelReason); setShowCancel(false); setCancelReason(""); }}>
-                Подтвердить
+              className={s.cancelInput}
+            />
+            <div className={`actions ${s.statusActions}`}>
+              <button
+                className={`btn btn-danger ${s.statusBtn}`}
+                disabled={busy || cancelReason.trim().length === 0}
+                onClick={confirmCancel}
+              >
+                {returnsMoney ? "Вернуть" : "Отменить заказ"}
               </button>
-              <button className={`btn btn-secondary ${s.statusBtn}`}
-                onClick={() => setShowCancel(false)}>Отмена</button>
+              <button
+                className={`btn btn-secondary ${s.statusBtn}`}
+                disabled={busy}
+                onClick={() => setShowCancel(false)}
+              >
+                Назад
+              </button>
             </div>
           </div>
         )}
@@ -86,13 +134,13 @@ function OrderRow({ order, labels, flow, onChangeStatus, onCancel }: OrderRowPro
 
 interface OrderTableProps {
   orders: Order[];
-  labels: Record<OrderStatus, string>;
   flow: Record<OrderStatus, OrderStatus[]>;
+  busyId: string | null;
   onChangeStatus: (id: string, status: OrderStatus) => void;
-  onCancel: (id: string, reason: string) => void;
+  onCancel: (id: string, reason: string) => Promise<void>;
 }
 
-export function OrderTable({ orders, labels, flow, onChangeStatus, onCancel }: OrderTableProps) {
+export function OrderTable({ orders, flow, busyId, onChangeStatus, onCancel }: OrderTableProps) {
   return (
     <table className="table">
       <thead>
@@ -108,9 +156,15 @@ export function OrderTable({ orders, labels, flow, onChangeStatus, onCancel }: O
         </tr>
       </thead>
       <tbody>
-        {orders.map((o) => (
-          <OrderRow key={o.id} order={o} labels={labels} flow={flow}
-            onChangeStatus={onChangeStatus} onCancel={onCancel} />
+        {orders.map((order) => (
+          <OrderRow
+            key={order.id}
+            order={order}
+            flow={flow}
+            busy={busyId === order.id}
+            onChangeStatus={onChangeStatus}
+            onCancel={onCancel}
+          />
         ))}
       </tbody>
     </table>

@@ -20,7 +20,8 @@ export function ProductFormFields({ form, setField, categories, salePoints }: Fo
           </div>
           <div className="form-group">
             <label htmlFor="sku">Артикул (SKU)</label>
-            <input id="sku" value={String(form.sku)} onChange={(e) => setField("sku", e.target.value)} placeholder="EL-001" />
+            <input id="sku" value={String(form.sku)} onChange={(e) => setField("sku", e.target.value)} placeholder="nordman:0" />
+            <p className="form-hint">Если артикул совпадает с ботом (например nordman:0), количество и наличие подтягиваются с Хвои</p>
           </div>
         </div>
 

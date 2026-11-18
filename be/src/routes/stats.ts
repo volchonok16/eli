@@ -116,6 +116,7 @@ statsRouter.get("/dashboard", staffAuthMiddleware, async (_req, res) => {
     stockByPoint: salePoints.map((point) => ({
       salePointId: point.id,
       shortName: point.shortName,
+      quantity: point.quantity,
       totalItems: point.products.reduce(
         (sum, p) => sum + (p.quantity - p.reserved),
         0

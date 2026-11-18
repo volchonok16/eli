@@ -21,7 +21,7 @@ export async function reserveProducts(
       const updated = await tx.$executeRaw`
         UPDATE "Product"
         SET reserved = reserved + ${item.quantity}
-        WHERE id = ${item.productId}::uuid
+        WHERE id = ${item.productId}
           AND quantity - reserved >= ${item.quantity}
       `;
 

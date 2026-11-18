@@ -152,11 +152,12 @@ export const CatalogPage = () => {
                       {product.heightLabel && (
                         <p className={`${styles.height} mb-3`}>{product.heightLabel} м</p>
                       )}
-                      <p className={styles.availability}>{product.inStock ? 'В наличии' : 'Под заказ'}</p>
-                      <div className={styles.buyRow}>
-                        <p className={styles.price}>{formatPrice(product.price)}</p>
-                        <span className={styles.details}>Подробнее <b aria-hidden="true">↗</b></span>
-                      </div>
+                      <p className="font-sans text-xl text-accent font-semibold">{formatPrice(product.price)}</p>
+                      <p className={`text-sm mt-2 ${product.available ? "text-green-700" : "text-text-muted"}`}>
+                        {product.available
+                          ? `В наличии: ${Math.max(0, product.quantity - product.reserved)} шт`
+                          : "Нет в наличии"}
+                      </p>
                     </div>
                   </motion.article>
                 </Link>

@@ -9,20 +9,24 @@ export async function sendMaxMessage(text: string): Promise<void> {
     return;
   }
 
-  const response = await fetch("https://botapi.max.ru/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: config.max.botToken,
-    },
-    body: JSON.stringify({
-      chat_id: config.max.chatId,
-      text,
-    }),
-  });
+  try {
+    const response = await fetch("https://botapi.max.ru/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: config.max.botToken,
+      },
+      body: JSON.stringify({
+        chat_id: config.max.chatId,
+        text,
+      }),
+    });
 
-  if (!response.ok) {
-    console.error("MAX messenger send failed:", await response.text());
+    if (!response.ok) {
+      console.error("MAX messenger send failed:", await response.text());
+    }
+  } catch (error) {
+    console.error("MAX messenger send failed:", error);
   }
 }
 
@@ -67,9 +71,12 @@ export async function notifyNewFeedbackMax(feedback: {
 
 export async function notifyCancellationMax(
   orderId: string,
-  reason: string
+  reason: string,
+  refunded = false
 ): Promise<void> {
-  const text = `Заказ отменён\nID: ${orderId}\nПричина: ${reason}`;
+  const text =
+    `Заказ отменён\nID: ${orderId}\nПричина: ${reason}` +
+    (refunded ? `\nВозврат через Точку оформлен` : "");
   await sendMaxMessage(text);
 }
 

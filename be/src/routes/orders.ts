@@ -3,11 +3,13 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { DeliveryType, OrderStatus } from "@prisma/client";
 import { prisma } from "../db/prisma.js";
-import { tochkaService } from "../services/tochka.js";
+import { config } from "../config.js";
+import { tochkaService, TochkaServiceError } from "../services/tochka.js";
 import { notifyNewOrder } from "../services/telegram.js";
 import { notifyNewOrderMax } from "../services/max.js";
+import { notifyOrderFormed } from "../services/order-mail.js";
+import { advanceOrderStatus, cancelShopOrder, OrderFlowError } from "../services/order.js";
 import {
-  cancelOrder,
   getCartReservedUntil,
   getPaymentExpiresAt,
   releaseOrderReservation,
@@ -30,30 +32,48 @@ const createOrderSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string().uuid(),
-        quantity: z.number().int().positive(),
+        productId: z.string().uuid("Некорректный товар"),
+        quantity: z.coerce.number().int().positive("Количество должно быть больше 0"),
       })
     )
     .min(1, "Корзина пуста"),
-  customerName: z.string().min(1).optional(),
-  customerPhone: z.string().min(1).optional(),
-  customerEmail: z.string().email().optional(),
+  customerName: z.string().trim().min(1, "Укажите имя").optional(),
+  customerPhone: z.string().trim().min(1, "Укажите телефон").optional(),
+  customerEmail: z
+    .string()
+    .trim()
+    .email("Укажите корректный email")
+    .optional()
+    .or(z.literal("")),
   deliveryType: z.nativeEnum(DeliveryType).optional(),
-  salePointId: z.string().uuid().optional(),
-  deliveryAddress: z.string().optional(),
-  deliveryZoneId: z.string().uuid().optional(),
+  salePointId: z.string().uuid("Некорректная точка продаж").optional(),
+  deliveryAddress: z.string().trim().optional(),
+  deliveryZoneId: z.string().uuid("Некорректная зона доставки").optional(),
 });
 
-const statusLabels: Record<OrderStatus, string> = {
-  PENDING: "Ожидает оплаты",
-  PAID: "Оплачен",
-  PROCESSING: "В обработке",
-  ASSEMBLED: "Собран",
-  DELIVERING: "Доставляется",
-  COMPLETED: "Выполнен",
-  CANCELLED: "Отменён",
-  FAILED: "Ошибка",
-};
+function zodErrorMessage(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Некорректные данные заказа";
+}
+
+function statusLabel(status: OrderStatus, deliveryType: DeliveryType | null): string {
+  if (status === OrderStatus.DELIVERING) {
+    return deliveryType === DeliveryType.SELF_PICKUP ? "Готов к выдаче" : "В пути";
+  }
+  if (status === OrderStatus.COMPLETED) {
+    return deliveryType === DeliveryType.SELF_PICKUP ? "Выдан" : "Доставлен";
+  }
+  const labels: Record<OrderStatus, string> = {
+    PENDING: "Ожидает оплаты",
+    PAID: "Оплачен",
+    PROCESSING: "В работе",
+    ASSEMBLED: "Собран",
+    DELIVERING: "В пути",
+    COMPLETED: "Доставлен",
+    CANCELLED: "Отменён",
+    FAILED: "Ошибка оплаты",
+  };
+  return labels[status];
+}
 
 function serializeOrderListItem(order: {
   id: string;
@@ -83,7 +103,7 @@ function serializeOrderListItem(order: {
   return {
     id: order.id,
     status: order.status,
-    statusLabel: statusLabels[order.status],
+    statusLabel: statusLabel(order.status, order.deliveryType),
     totalAmount: Number(order.totalAmount),
     deliveryType: order.deliveryType,
     deliveryCost: order.deliveryCost ? Number(order.deliveryCost) : null,
@@ -112,7 +132,7 @@ function serializeOrderListItem(order: {
 ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res) => {
   const parsed = createOrderSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: zodErrorMessage(parsed.error) });
     return;
   }
 
@@ -162,6 +182,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
     deliveryCost = Number(zone.basePrice);
   }
 
+  let salePointName: string | null = null;
   if (parsed.data.deliveryType === DeliveryType.SELF_PICKUP && parsed.data.salePointId) {
     const point = await prisma.salePoint.findUnique({
       where: { id: parsed.data.salePointId },
@@ -170,6 +191,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       res.status(400).json({ error: "Точка продаж не найдена" });
       return;
     }
+    salePointName = point.shortName;
   }
 
   const totalAmount = itemsTotal + deliveryCost;
@@ -200,7 +222,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       userId,
       customerName: parsed.data.customerName ?? null,
       customerPhone: parsed.data.customerPhone ?? null,
-      customerEmail: parsed.data.customerEmail ?? null,
+      customerEmail: parsed.data.customerEmail || null,
       deliveryType: parsed.data.deliveryType ?? null,
       salePointId: parsed.data.salePointId ?? null,
       deliveryAddress: parsed.data.deliveryAddress ?? null,
@@ -217,9 +239,20 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
 
   try {
     const payment = await tochkaService.createPaymentLink({
-      amount: totalAmount,
+      amount: Number(totalAmount.toFixed(2)),
       purpose: `Оплата заказа ${order.id}`,
       paymentLinkId,
+      customerEmail: order.customerEmail,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      deliveryCost,
+      redirectUrl: `${config.feUrl}/payment/success?order=${order.id}`,
+      failRedirectUrl: `${config.feUrl}/payment/fail?order=${order.id}`,
+      items: order.items.map((item) => ({
+        name: item.product.name,
+        price: Number(item.price),
+        quantity: item.quantity,
+      })),
     });
 
     const updated = await prisma.order.update({
@@ -234,10 +267,31 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       name: i.product.name,
       quantity: i.quantity,
     }));
+    const deliveryLabel =
+      parsed.data.deliveryType === DeliveryType.SELF_PICKUP
+        ? `Самовывоз${salePointName ? ` · ${salePointName}` : ""}`
+        : parsed.data.deliveryAddress
+          ? `Доставка · ${parsed.data.deliveryAddress}`
+          : null;
 
     await Promise.all([
       notifyNewOrder(order.id, totalAmount, notifyItems),
       notifyNewOrderMax(order.id, totalAmount, notifyItems),
+      notifyOrderFormed({
+        to: order.customerEmail ?? "",
+        customerName: order.customerName,
+        orderId: order.id,
+        items: order.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+        })),
+        itemsTotal,
+        deliveryCost,
+        deliveryLabel,
+        paymentLink: updated.paymentLink,
+        createdAt: order.createdAt,
+      }),
     ]);
 
     res.status(201).json({
@@ -258,7 +312,8 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
 
     const message =
       error instanceof Error ? error.message : "Ошибка создания платежа";
-    res.status(502).json({ error: message });
+    const status = error instanceof TochkaServiceError ? error.status : 502;
+    res.status(status >= 400 && status < 600 ? status : 502).json({ error: message });
   }
 });
 
@@ -302,42 +357,42 @@ ordersRouter.patch("/:id/status", staffAuthMiddleware, async (req, res) => {
     return;
   }
 
-  const existing = await prisma.order.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Заказ не найден" });
-    return;
+  try {
+    const order = await advanceOrderStatus(id, parsed.data.status, parsed.data.managerNote);
+    res.json(serializeOrderListItem(order));
+  } catch (error) {
+    if (error instanceof OrderFlowError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
   }
-
-  const order = await prisma.order.update({
-    where: { id },
-    data: {
-      status: parsed.data.status,
-      managerNote: parsed.data.managerNote ?? existing.managerNote,
-    },
-    include: {
-      items: { include: { product: true } },
-      salePoint: { select: { id: true, shortName: true } },
-    },
-  });
-
-  res.json(serializeOrderListItem(order));
 });
 
 ordersRouter.post("/:id/cancel", staffAuthMiddleware, async (req, res) => {
   const id = paramId(req.params.id);
   const parsed = z.object({ reason: z.string().min(1) }).safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    res.status(400).json({ error: "Укажите причину отмены" });
     return;
   }
 
-  const existing = await prisma.order.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: "Заказ не найден" });
+  const reason = parsed.data.reason.trim();
+  if (!reason) {
+    res.status(400).json({ error: "Укажите причину отмены" });
     return;
   }
 
-  await cancelOrder(id, parsed.data.reason);
+  try {
+    await cancelShopOrder(id, reason);
+  } catch (error) {
+    if (error instanceof OrderFlowError || error instanceof TochkaServiceError) {
+      res.status(error.status).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   const order = await prisma.order.findUniqueOrThrow({
     where: { id },
     include: {

@@ -13,18 +13,22 @@ export async function sendTelegramMessage(text: string): Promise<void> {
   }
 
   const url = `https://api.telegram.org/bot${config.telegram.botToken}/sendMessage`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: config.telegram.chatId,
-      text,
-      parse_mode: "HTML",
-    }),
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: config.telegram.chatId,
+        text,
+        parse_mode: "HTML",
+      }),
+    });
 
-  if (!response.ok) {
-    console.error("Telegram send failed:", await response.text());
+    if (!response.ok) {
+      console.error("Telegram send failed:", await response.text());
+    }
+  } catch (error) {
+    console.error("Telegram send failed:", error);
   }
 }
 
@@ -73,12 +77,14 @@ export async function notifyNewFeedback(feedback: {
 
 export async function notifyCancellation(
   orderId: string,
-  reason: string
+  reason: string,
+  refunded = false
 ): Promise<void> {
   const text =
     `<b>Заказ отменён</b>\n` +
     `ID: <code>${orderId}</code>\n` +
-    `Причина: ${escapeHtml(reason)}`;
+    `Причина: ${escapeHtml(reason)}` +
+    (refunded ? `\nВозврат через Точку оформлен` : "");
 
   await sendTelegramMessage(text);
 }

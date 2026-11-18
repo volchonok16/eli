@@ -16,6 +16,10 @@ const cartInclude = {
 } as const;
 
 export async function getOrCreateCart(userId: string) {
+  return getOrCreateUserCart(userId);
+}
+
+export async function getOrCreateUserCart(userId: string) {
   const existing = await prisma.cart.findUnique({
     where: { userId },
     include: cartInclude,
@@ -29,6 +33,54 @@ export async function getOrCreateCart(userId: string) {
     data: { userId },
     include: cartInclude,
   });
+}
+
+export async function getOrCreateGuestCart(guestKey: string) {
+  const existing = await prisma.cart.findUnique({
+    where: { guestKey },
+    include: cartInclude,
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return prisma.cart.create({
+    data: { guestKey },
+    include: cartInclude,
+  });
+}
+
+export async function mergeGuestCartIntoUser(guestKey: string, userId: string) {
+  const guestCart = await prisma.cart.findUnique({
+    where: { guestKey },
+    include: { items: true },
+  });
+
+  if (!guestCart) return getOrCreateUserCart(userId);
+
+  const userCart = await getOrCreateUserCart(userId);
+
+  for (const item of guestCart.items) {
+    const existing = userCart.items.find((entry) => entry.productId === item.productId);
+    if (existing) {
+      await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + item.quantity },
+      });
+    } else {
+      await prisma.cartItem.create({
+        data: {
+          cartId: userCart.id,
+          productId: item.productId,
+          quantity: item.quantity,
+        },
+      });
+    }
+  }
+
+  await prisma.cart.delete({ where: { id: guestCart.id } });
+  return getOrCreateUserCart(userId);
 }
 
 export function serializeCart(cart: {
