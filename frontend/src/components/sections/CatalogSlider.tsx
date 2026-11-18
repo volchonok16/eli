@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValue, useScroll } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { productsApi } from "@/api/endpoints/products";
 import type { ProductResponse } from "@/api/endpoints/products";
@@ -28,9 +28,15 @@ const defaultSlide: Slide = {
   stats: ["Высота: 1,5–2,5 м", "Аромат: насыщенный", "От 4 900 ₽"],
 };
 
+function getStickyScrollRange(container: HTMLElement, stage: HTMLElement) {
+  return Math.max(0, container.offsetHeight - stage.offsetHeight);
+}
+
 export const StickyShowcase = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const trackX = useMotionValue(0);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
@@ -41,14 +47,50 @@ export const StickyShowcase = () => {
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "featured-slides"],
-    queryFn: () => productsApi.getAll({ sort: "popularity" }),
+    queryFn: () => productsApi.getAll({ sort: "popularity", limit: 4 }),
     staleTime: 10 * 60 * 1000,
   });
 
   const slides: Slide[] = products?.length ? products.map(productToSlide).slice(0, 4) : [defaultSlide];
   const [activeSlide, setActiveSlide] = useState(0);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
-  const trackX = useTransform(scrollYProgress, (progress) => isMobile ? 0 : -(trackRef.current?.clientWidth ?? window.innerWidth) * Math.max(0, slides.length - 1) * progress);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const stage = stageRef.current;
+    const track = trackRef.current;
+    if (!container || !stage || !track) return;
+
+    const updatePosition = () => {
+      if (isMobile) {
+        trackX.set(0);
+        return;
+      }
+
+      const stickyTop = Number.parseFloat(window.getComputedStyle(stage).top) || 0;
+      const range = getStickyScrollRange(container, stage);
+      const containerTop = window.scrollY + container.getBoundingClientRect().top;
+      const progress = range
+        ? Math.min(1, Math.max(0, (scrollY.get() - containerTop + stickyTop) / range))
+        : 0;
+      trackX.set(-(track.scrollWidth - track.clientWidth) * progress);
+      setActiveSlide(Math.round(progress * (slides.length - 1)));
+    };
+
+    const resizeObserver = new ResizeObserver(updatePosition);
+    resizeObserver.observe(container);
+    resizeObserver.observe(stage);
+    resizeObserver.observe(track);
+    const unsubscribe = scrollY.on("change", updatePosition);
+    window.addEventListener("resize", updatePosition);
+    updatePosition();
+
+    return () => {
+      resizeObserver.disconnect();
+      unsubscribe();
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isLoading, isMobile, scrollY, slides.length, trackX]);
 
   const scrollToSlide = (index: number) => {
     if (!containerRef.current) return;
@@ -56,20 +98,18 @@ export const StickyShowcase = () => {
       trackRef.current?.children[index]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
       return;
     }
+    const stage = stageRef.current;
+    if (!stage) return;
+    const stickyTop = Number.parseFloat(window.getComputedStyle(stage).top) || 0;
     const containerTop = window.scrollY + containerRef.current.getBoundingClientRect().top;
-    const scrollRange = containerRef.current.offsetHeight - window.innerHeight;
+    const scrollRange = getStickyScrollRange(containerRef.current, stage);
     const progress = slides.length > 1 ? index / (slides.length - 1) : 0;
-    window.scrollTo({ top: containerTop + scrollRange * progress, behavior: 'smooth' });
+    window.scrollTo({ top: containerTop - stickyTop + scrollRange * progress, behavior: 'smooth' });
   };
-
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    if (isMobile) return;
-    setActiveSlide(Math.round(progress * (slides.length - 1)));
-  });
 
   return (
     <div ref={containerRef} className={styles.showcase} style={{ '--showcase-count': slides.length } as CSSProperties}>
-      <div className={styles.stage}>
+      <div ref={stageRef} className={styles.stage}>
         <div className={styles.atmosphere} aria-hidden="true" />
         {isLoading ? (
           <div className="absolute inset-0 flex items-center">
