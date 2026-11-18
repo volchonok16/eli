@@ -5,7 +5,7 @@ const SkeletonGrid = () => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
     {Array.from({ length: 4 }).map((_, i) => (
       <div key={i} className="card animate-pulse">
-        <div className="aspect-[4/5] bg-surface-dark" />
+        <div className="m-[10px_10px_0] aspect-[3/4] rounded-[15px] border border-[#afc4b37a] bg-[radial-gradient(ellipse_at_50%_35%,#fcfdf7,#e5e9da)]" />
         <div className="p-6 space-y-3">
           <div className="h-3 bg-surface-dark rounded w-1/2" />
           <div className="h-5 bg-surface-dark rounded w-3/4" />

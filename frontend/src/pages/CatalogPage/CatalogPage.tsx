@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCategories } from './useCategories';
 import { useProducts } from './useProducts';
+import styles from './CatalogPage.module.css';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -11,7 +12,7 @@ const SkeletonGrid = () => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
     {Array.from({ length: 6 }).map((_, i) => (
       <div key={i} className="card animate-pulse">
-        <div className="aspect-[4/3] bg-surface-dark" />
+        <div className="aspect-[3/4] bg-surface-dark" />
         <div className="p-6 space-y-3">
           <div className="h-5 bg-surface-dark rounded w-3/4" />
           <div className="h-4 bg-surface-dark rounded w-1/2" />
@@ -40,8 +41,8 @@ export const CatalogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface">
-      <section className="py-16 bg-surface-dark relative overflow-hidden">
+    <div className="internal-page min-h-screen bg-surface">
+      <section className="page-hero relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]">
           <img src="/images/photos/classic-christmas-fir.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
         </div>
@@ -51,22 +52,21 @@ export const CatalogPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Каталог ёлок</h1>
-            <p className="text-text-muted text-lg max-w-xl">
+            <h1 className="page-title mb-4">Каталог ёлок</h1>
+            <p className="page-subtitle">
               Живые новогодние ёлки для дома, офиса и загородного дома
             </p>
           </motion.div>
         </div>
       </section>
 
-      <div className="border-b border-surface-muted bg-surface sticky top-[65px] z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className={`${styles.filters} border-b border-surface-muted`}>
+        <div className={`${styles.filterInner} mx-auto flex max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8`}>
+          <div className={`${styles.categories} flex min-w-0 items-center`}>
             <button
               onClick={() => setCategory('')}
-              className={`text-xs sm:text-sm px-3 py-1.5 transition-colors ${
-                !category ? 'bg-primary text-surface' : 'text-text-muted hover:text-primary'
-              }`}
+              aria-pressed={!category}
+              className="min-h-11 shrink-0 rounded-full transition-colors"
             >
               Все
             </button>
@@ -74,22 +74,19 @@ export const CatalogPage = () => {
               <button
                 key={item.id}
                 onClick={() => setCategory(item.slug)}
-                className={`text-xs sm:text-sm px-3 py-1.5 transition-colors ${
-                  category === item.slug || category === item.id
-                    ? 'bg-primary text-surface'
-                    : 'text-text-muted hover:text-primary'
-                }`}
+                aria-pressed={category === item.slug || category === item.id}
+                className="min-h-11 shrink-0 rounded-full transition-colors"
               >
                 {item.name}
               </button>
             ))}
           </div>
 
-          <div className="ml-auto">
+          <div className="w-full sm:w-auto">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="text-xs sm:text-sm border border-surface-muted bg-surface text-text-muted px-3 py-1.5 focus:outline-none focus:border-primary"
+              className="min-h-11 w-full rounded-full border border-surface-muted bg-white px-4 py-2 text-sm text-text focus:outline-none focus:border-primary sm:w-auto"
             >
               <option value="popular">По популярности</option>
               <option value="price_asc">Цена: по возрастанию</option>
@@ -118,22 +115,25 @@ export const CatalogPage = () => {
           )}
 
           {products && products.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {products.map((product, index) => (
-                <Link key={product.id} to={`/product/${product.id}`} className="block">
+              <div className={styles.grid}>
+                {products.map((product, index) => (
+                <Link key={product.id} to={`/product/${product.id}`} className={`${styles.cardLink} block min-w-0 rounded-[23px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary`}>
                   <motion.article
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-50px' }}
                     transition={{ duration: 0.45, delay: index * 0.08 }}
-                    className="card group cursor-pointer h-full"
+                    className={`card ${styles.card} group h-full`}
                   >
-                    <div className="aspect-[4/3] bg-surface-dark flex items-center justify-center overflow-hidden relative">
+                    <div className={styles.image}>
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       {product.images?.[0] ? (
-                        <img src={resolveProductImage(product.images[0])} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <img src={resolveProductImage(product.images[0])} alt={product.name} className="w-full h-full object-contain transition-transform duration-500" loading="lazy" />
                       ) : (
-                        <div className="text-text-muted/20 font-serif text-lg">Eli</div>
+                        <div className="flex h-full flex-col items-center justify-center p-6 text-center text-sm text-text-muted">
+                          <img src="/images/spruce-blue.svg" alt="" aria-hidden="true" className="h-4/5 w-full object-contain opacity-80" />
+                          <span className="mt-2 text-xs">ФОТО ГОТОВИТСЯ</span>
+                        </div>
                       )}
                       {product.isNew && (
                         <span className="absolute top-3 left-3 bg-accent text-surface text-[10px] uppercase tracking-widest px-2 py-0.5">New</span>
@@ -142,17 +142,21 @@ export const CatalogPage = () => {
                         <span className="absolute top-3 right-3 bg-primary text-surface text-[10px] uppercase tracking-widest px-2 py-0.5">Хит</span>
                       )}
                     </div>
-                    <div className="p-6">
+                    <div className={styles.copy}>
                       {product.sort && (
-                        <p className="text-xs text-text-muted/50 uppercase tracking-widest mb-2">{product.sort}</p>
+                        <p className={`${styles.sortLabel} mb-2 uppercase`}>{product.sort}</p>
                       )}
-                      <h3 className="font-serif text-lg text-primary mb-2 group-hover:text-accent transition-colors leading-tight">
+                      <h3 className={`${styles.title} mb-2 font-serif group-hover:text-accent transition-colors`}>
                         {product.name}
                       </h3>
                       {product.heightLabel && (
-                        <p className="text-text-muted text-sm mb-3">{product.heightLabel} м</p>
+                        <p className={`${styles.height} mb-3`}>{product.heightLabel} м</p>
                       )}
-                      <p className="font-sans text-xl text-accent font-semibold">{formatPrice(product.price)}</p>
+                      <p className={styles.availability}>{product.inStock ? 'В наличии' : 'Под заказ'}</p>
+                      <div className={styles.buyRow}>
+                        <p className={styles.price}>{formatPrice(product.price)}</p>
+                        <span className={styles.details}>Подробнее <b aria-hidden="true">↗</b></span>
+                      </div>
                     </div>
                   </motion.article>
                 </Link>

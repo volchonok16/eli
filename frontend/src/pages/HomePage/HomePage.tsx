@@ -11,7 +11,7 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 
 export const HomePage = () => (
   <>
-    <div className="flex justify-center bg-white px-4 py-2 lg:hidden">
+    <div className="flex justify-center bg-surface px-4 py-2 lg:hidden">
       <a
         href="tel:+79991234567"
         className="text-xs font-medium tracking-wide text-primary/80 hover:text-primary transition-colors"

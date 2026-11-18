@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/shared/contexts';
 import { useCartContext } from '@/shared/contexts';
 import { UserIcon } from './ui/UserIcon';
 import { CartIcon } from './ui/CartIcon';
+import styles from './Header.module.css';
 
 const navLinks = [
   { to: '/catalog', label: 'Каталог' },
@@ -14,10 +15,13 @@ const navLinks = [
   { to: '/about', label: 'О нас' },
 ];
 
+const isNavActive = (pathname: string, to: string) => pathname === to || (to === '/catalog' && pathname.startsWith('/product/'));
+
 const stagger = { animate: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } }, exit: { transition: { staggerChildren: 0.04, staggerDirection: -1 } } };
 const itemAnim = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } }, exit: { opacity: 0, y: 10, transition: { duration: 0.25 } } };
 
 export const Header = () => {
+  const headerRef = useRef<HTMLElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated, logout } = useAuth();
@@ -30,11 +34,28 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeaderHeight = () => {
+      document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`);
+    };
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    updateHeaderHeight();
+
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--header-height');
+    };
+  }, []);
+
   const closeMenu = () => setIsMenuOpen(false);
   const cartBadge = itemCount > 0 && <span className="absolute -top-1.5 -right-3 w-4 h-4 bg-accent text-surface text-[9px] font-bold rounded-full flex items-center justify-center">{itemCount}</span>;
 
   const navItems = navLinks.map(({ to, label }) => (
-    <Link key={to} to={to} className={`text-xs sm:text-sm tracking-[0.03em] font-medium transition-colors ${pathname === to ? 'text-primary' : 'text-primary/55 hover:text-primary'}`}>{label}</Link>
+    <Link key={to} to={to} aria-current={isNavActive(pathname, to) ? 'page' : undefined} className="text-[11px] tracking-[0.03em] font-medium transition-colors lg:text-xs">{label}</Link>
   ));
 
   const utilAuth = isAuthenticated ? (
@@ -48,51 +69,25 @@ export const Header = () => {
 
   return (
     <>
-      <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 safe-top ${isScrolled ? 'bg-surface/95 backdrop-blur-md shadow-[0_1px_0_rgba(28,25,23,0.04)]' : 'bg-surface/60 backdrop-blur-md'}`}>
-        <div className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-500 ${isScrolled ? 'py-2 sm:py-3' : 'py-3 sm:py-4'}`}>
-          <motion.div layout className={`flex items-center ${isScrolled ? '' : 'lg:justify-center'}`}>
-            <motion.div layout>
-              <Link to="/" className={`block font-display font-bold italic text-primary tracking-wide transition-all duration-500 ${isScrolled ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'}`}>Eli</Link>
+      <header ref={headerRef} className={`${styles.header} glass-panel fixed top-0 inset-x-0 z-50 transition-all duration-500 safe-top`}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <motion.div layout className="flex w-full items-center justify-between gap-6 lg:gap-10">
+            <motion.div layout className="shrink-0">
+              <Link to="/" className={`block font-display font-bold italic text-primary tracking-wide transition-all duration-500 ${isScrolled ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-4xl'} ${!isScrolled ? 'lg:text-4xl' : ''}`}>Eli</Link>
             </motion.div>
 
-            {isScrolled && (
-              <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hidden lg:flex items-center gap-6 ml-8">
-                <nav className="flex items-center gap-6">{navItems}</nav>
+              <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hidden md:flex min-w-0 flex-1 items-center justify-end gap-5 lg:gap-8">
+                <nav className="flex items-center gap-3 lg:gap-4 xl:gap-6">{navItems}</nav>
                 <div className="flex items-center gap-4">{utilAuth}</div>
                 <Link to="/cart" className="relative flex items-center gap-1.5 text-xs text-primary/50 hover:text-primary transition-colors"><CartIcon />Корзина{cartBadge}</Link>
-              </motion.div>
-            )}
+            </motion.div>
 
-            <div className="lg:hidden flex items-center gap-4 ml-auto">
+            <div className="md:hidden ml-auto flex items-center gap-4">
               <Link to="/cart" className="relative flex items-center gap-1 text-sm text-primary/70 px-1 py-2 min-w-[44px] font-medium" aria-label={`Корзина${itemCount > 0 ? `, ${itemCount} товаров` : ''}`}><CartIcon />{cartBadge}</Link>
               <button className="text-sm text-primary/70 font-medium px-1 py-2 min-w-[44px] min-h-[44px]" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-expanded={isMenuOpen}>{isMenuOpen ? 'Закрыть' : 'Меню'}</button>
             </div>
           </motion.div>
 
-          {!isScrolled && (
-            <motion.div layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="hidden lg:block overflow-hidden mt-2">
-              <div className="flex flex-col items-center gap-2 sm:gap-3">
-                <nav className="flex items-center gap-6 sm:gap-8">
-                  {navLinks.map(({ to, label }) => (
-                    <Link key={to} to={to} className={`text-xs sm:text-sm tracking-[0.03em] font-medium transition-colors ${pathname === to ? 'text-primary' : 'text-primary/60 hover:text-primary'}`}>{label}</Link>
-                  ))}
-                </nav>
-                <div className="flex items-center gap-5">
-                  {isAuthenticated ? (
-                    <>
-                      <Link to="/profile" className="flex items-center gap-1.5 text-[11px] sm:text-xs text-primary/50 hover:text-primary transition-colors"><UserIcon />Профиль</Link>
-                      <span className="text-primary/15 text-xs">·</span>
-                      <button onClick={logout} className="text-[11px] sm:text-xs text-primary/50 hover:text-error transition-colors">Выйти</button>
-                    </>
-                  ) : (
-                    <Link to="/login" className="flex items-center gap-1.5 text-[11px] sm:text-xs text-primary/50 hover:text-primary transition-colors"><UserIcon />Войти</Link>
-                  )}
-                  <span className="text-primary/15 text-xs">·</span>
-                  <Link to="/cart" className="relative flex items-center gap-1.5 text-[11px] sm:text-xs text-primary/50 hover:text-primary transition-colors"><CartIcon />Корзина{cartBadge}</Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
         </div>
       </header>
 
@@ -103,7 +98,7 @@ export const Header = () => {
             <motion.nav variants={stagger} initial="initial" animate="animate" exit="exit" className="flex flex-col items-center gap-1">
               {navLinks.map(({ to, label }) => (
                 <motion.div key={to} variants={itemAnim}>
-                  <Link to={to} onClick={closeMenu} className={`block text-2xl font-serif py-3 px-6 transition-colors ${pathname === to ? 'text-primary' : 'text-text-muted hover:text-primary'}`}>{label}</Link>
+                  <Link to={to} onClick={closeMenu} aria-current={isNavActive(pathname, to) ? 'page' : undefined} className={`block text-2xl font-serif py-3 px-6 transition-colors ${isNavActive(pathname, to) ? 'text-primary' : 'text-text-muted hover:text-primary'}`}>{label}</Link>
                 </motion.div>
               ))}
               <motion.div variants={itemAnim} className="mt-10">

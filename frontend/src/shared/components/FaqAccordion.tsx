@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import styles from './FaqAccordion.module.css';
 
 interface FaqItem {
   question: string;
@@ -43,9 +44,9 @@ export const FaqAccordion = ({ items = faqItems }: FaqAccordionProps) => {
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       {items.map((item, index) => (
-        <div key={index} className="border border-surface-muted">
+        <div key={index} className={styles.row}>
           <button
-            className="w-full px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center text-left bg-surface hover:bg-surface-dark transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 min-h-[44px]"
+            className={`${styles.trigger} w-full px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center text-left transition-colors duration-200 min-h-[52px]`}
             onClick={() => toggle(index)}
             aria-expanded={openIndex === index}
           >

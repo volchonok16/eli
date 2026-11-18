@@ -10,7 +10,7 @@ interface DotProps {
 export const Dot: FC<DotProps> = ({ index, total, scrollYProgress }) => {
   const start = index / total;
   const end = (index + 1) / total;
-  const bgColor = useTransform(scrollYProgress, [start, end], ["rgba(255,255,255,0.12)", "rgba(202,138,4,0.9)"]);
+  const bgColor = useTransform(scrollYProgress, [start, end], ["rgba(255,255,255,0.12)", "rgba(43,102,81,0.9)"]);
   const width = useTransform(scrollYProgress, [start, end], [6, 24]);
   return <motion.div style={{ backgroundColor: bgColor, width }} className="h-1.5 sm:h-2 rounded-full" />;
 };

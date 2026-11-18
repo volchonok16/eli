@@ -46,16 +46,16 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="auth-page min-h-[80vh] flex items-center justify-center bg-surface px-4">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <h1 className="font-display text-4xl text-primary text-center mb-2">Регистрация</h1>
+        <h1 className="page-title text-center mb-2">Регистрация</h1>
         <p className="text-text-muted text-center mb-8">Создайте аккаунт для отслеживания заказов</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="glass-form space-y-4 p-5 sm:p-7">
           {error && <p className="text-error text-sm bg-error/5 border border-error/20 p-3">{error}</p>}
 
           <div>

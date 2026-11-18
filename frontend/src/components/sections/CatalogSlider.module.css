@@ -1,0 +1,360 @@
+@tailwind components;
+
+@layer components {
+:where(.showcase) {
+  position: relative;
+  height: calc(var(--showcase-count, 4) * 100svh);
+  background: #f3f3eb;
+}
+
+:where(.stage) {
+  position: sticky;
+  top: 74px;
+  display: grid;
+  height: calc(100svh - 74px);
+  min-height: 680px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-content: stretch;
+  row-gap: 18px;
+  overflow: clip;
+  isolation: isolate;
+  background: #f1f2e9;
+  padding: 28px max(36px, calc((100% - 1360px) / 2)) 24px;
+}
+
+:where(.atmosphere) {
+  position: absolute;
+  z-index: 0;
+  inset: -6%;
+  pointer-events: none;
+  background: linear-gradient(95deg, rgb(239 242 233 / 96%), rgb(237 242 230 / 87%) 45%, rgb(217 231 221 / 74%)), url('/images/photos/fresh-fir-needle-detail.png') center / cover;
+  filter: blur(2px) saturate(0.8);
+  transform: scale(1.06);
+}
+
+:where(.stage > .track),
+:where(.stage > .controls),
+:where(.stage > div:not(.atmosphere)) {
+  position: relative;
+  z-index: 1;
+}
+
+:where(.stage::after) {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  background: linear-gradient(112deg, transparent 30%, rgb(255 255 255 / 20%) 30.2%, transparent 30.5%, transparent 77%, rgb(255 255 255 / 30%) 77.2%, transparent 77.5%);
+  content: '';
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+:where(.track) {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+:where(.slide) {
+  display: grid;
+  min-width: 100%;
+  height: 100%;
+  flex: 0 0 100%;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 5%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+:where(.copy) {
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+}
+
+:where(.photo::before) {
+  position: absolute;
+  z-index: 2;
+  inset: 11px;
+  border: 1px solid rgb(255 255 255 / 78%);
+  border-radius: 17px;
+  box-shadow: 0 0 0 1px rgb(53 94 70 / 15%), 0 2px 4px rgb(23 60 45 / 12%);
+  content: '';
+  pointer-events: none;
+}
+
+:where(.photo) {
+  --glass-background: linear-gradient(125deg, rgb(255 255 255 / 17%), rgb(255 255 255 / 3%) 52%, rgb(204 223 199 / 12%));
+  --glass-box-shadow: inset 1px 2px 2px #fff, inset -1px -2px 2px rgb(82 108 76 / 14%), 0 24px 65px rgb(63 88 75 / 8%);
+  border: 1px solid rgb(255 255 255 / 90%);
+  background: linear-gradient(135deg, rgb(255 255 255 / 22%), rgb(220 239 227 / 8%) 55%, rgb(255 255 255 / 14%));
+  box-shadow: inset 0 2px 1px rgb(255 255 255 / 92%), inset 2px 0 2px rgb(255 255 255 / 70%), inset -2px -2px 2px rgb(101 141 121 / 38%), 0 4px 5px rgb(36 78 57 / 7%), 0 18px 30px -18px rgb(23 60 45 / 40%);
+  backdrop-filter: blur(5px) saturate(1.1);
+}
+
+:where(.photo small) {
+  right: 16px;
+  left: 16px;
+  z-index: 3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+:where(.title) {
+  color: #2b4938;
+  font-size: clamp(34px, 3.7vw, 58px);
+  font-weight: 400;
+  line-height: 1.02;
+}
+
+:where(.index) {
+  margin-bottom: 22px;
+  color: #476a53;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+}
+
+:where(.facts) {
+  gap: 12px;
+  margin: 16px 0;
+  padding: 14px 0;
+  border-top: 1px solid rgb(82 109 76 / 15%);
+  border-bottom: 1px solid rgb(82 109 76 / 15%);
+  color: #35543f;
+  font-size: 11px;
+}
+
+:where(.facts span) {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+:where(.facts span + span) {
+  padding-left: 12px;
+  border-left: 1px solid rgb(82 109 76 / 20%);
+}
+
+:where(.photo) {
+  position: relative;
+  display: flex;
+  width: min(100%, 600px, calc((100svh - 190px) * 0.75));
+  aspect-ratio: 3 / 4;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  overflow: hidden;
+  padding: 12px;
+  border-radius: 24px;
+  background: var(--glass-background);
+  box-shadow: var(--glass-box-shadow);
+}
+
+:where(.photoImage) {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  object-fit: cover;
+  filter: drop-shadow(5px 16px 14px rgb(48 68 42 / 10%));
+}
+
+:where(.illustration) {
+  object-fit: contain;
+  padding: 0 20px 24px;
+}
+
+:where(.controls) {
+  --glass-radius: 38px;
+  --glass-border: 1px solid rgb(144 174 153 / 60%);
+  --glass-background: linear-gradient(120deg, rgb(255 255 255 / 55%), rgb(216 237 225 / 4%), rgb(255 255 255 / 45%));
+  --glass-box-shadow: inset 0 2px 1px #fff, 0 10px 35px rgb(37 78 56 / 16%);
+  position: relative;
+  display: flex;
+  justify-self: center;
+  align-self: center;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  margin: 0;
+}
+
+:where(.controls button) {
+  display: grid;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--fir-deep);
+}
+
+:where(.dots) {
+  position: relative;
+  display: flex;
+  gap: 3px;
+}
+
+:where(.dots::before) {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(142 181 154 / 70%);
+  border-radius: 50%;
+  background: var(--fir-glass);
+  box-shadow: var(--fir-glint);
+  content: '';
+  pointer-events: none;
+  transform: translateX(calc(var(--active-index, 0) * 45px));
+  transition: transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:where(.dots button) {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 50%;
+  color: var(--fir-deep);
+  font-size: 12px;
+}
+
+:where(.dots button[aria-pressed='true']) { color: var(--paper); font-weight: 700; }
+
+:where(.dots button:hover:not([aria-pressed='true'])) {
+  background: rgb(185 213 196 / 36%);
+}
+
+@media (max-width: 767px) {
+  :where(.showcase) {
+    height: auto;
+  }
+
+  :where(.stage) {
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 18px;
+    padding: 36px 0 25px;
+  }
+
+  :where(.stage::after) { opacity: 0.35; }
+
+  :where(.atmosphere) { background-position: 70% center; }
+
+  :where(.track) {
+    height: auto;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+  }
+
+  :where(.slide) {
+    display: flex;
+    height: auto;
+    flex-direction: column;
+    gap: 24px;
+    padding: 0 24px 24px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  :where(.photo) {
+    width: min(100%, 240px);
+    height: 320px;
+    align-self: center;
+  }
+
+  :where(.photoImage) { width: 100%; height: 100%; max-height: 100%; padding: 12px 12px 28px; object-fit: cover; }
+  :where(.photo:has(small) .photoImage) { object-fit: contain; }
+
+  :where(.illustration) { object-fit: contain; padding: 12px 12px 28px; }
+
+  :where(.copy) {
+    max-width: none;
+    text-align: center;
+  }
+
+  :where(.title) {
+    min-height: 72px;
+    font-size: 35px;
+  }
+
+  :where(.index) { margin-bottom: 14px; }
+
+  :where(.copy) { padding: 0 3px; }
+
+  :where(.copy > p:nth-of-type(2)) { font-size: 13px; line-height: 1.6; }
+
+  :where(.copy > .btn-primary) { width: 100%; justify-content: space-between; }
+
+  :where(.facts) { margin: 18px 0 22px; gap: 10px; padding: 15px 0; font-size: 10px; }
+
+  :where(.photo small) { bottom: 10px; }
+
+  :where(.controls) {
+    position: relative;
+    align-self: center;
+    margin-top: auto;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 359px) {
+  :where(.title) {
+    font-size: 30px;
+  }
+
+  :where(.dots::before) { width: 38px; height: 38px; transform: translateX(calc(var(--active-index, 0) * 40px)); }
+  :where(.dots button) { width: 38px; height: 38px; min-width: 38px; min-height: 38px; }
+}
+
+@media (max-width: 767px) {
+  :where(.dots::before) { transform: translateX(calc(var(--active-index, 0) * 43px)); }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :where(.stage) { padding-inline: max(46px, calc((100% - 1200px) / 2)); }
+  :where(.slide) { grid-template-columns: 1fr 1fr; gap: 6%; }
+  :where(.photo) {
+    width: min(100%, 300px, calc((100svh - 370px) * 0.75));
+  }
+
+}
+
+@media (max-height: 780px) and (min-width: 768px) {
+  :where(.stage) {
+    min-height: 610px;
+  }
+
+  :where(.photoImage) {
+    max-height: 43svh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.dots::before) {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :where(.controls) {
+    --glass-background: var(--paper);
+    backdrop-filter: none;
+  }
+}
+
+}

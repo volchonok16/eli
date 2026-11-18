@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
+import styles from './HeroSection.module.css';
 
 export const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -16,15 +17,15 @@ export const HeroSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[100vh] flex flex-col lg:flex-row overflow-hidden bg-surface-dark"
+      className={styles.hero}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_35%,rgba(202,138,4,0.04),transparent_60%),radial-gradient(ellipse_at_25%_80%,rgba(28,25,23,0.02),transparent_55%)] pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_35%,rgba(186,213,195,0.18),transparent_60%),radial-gradient(ellipse_at_25%_80%,rgba(28,62,51,0.03),transparent_55%)]" />
 
       <motion.div
         style={{ scale: bgScale }}
-        className="relative w-full lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-[55%] h-[50vh] lg:h-full shrink-0"
+        className={styles.image}
       >
-        <div className="absolute inset-0 lg:left-24">
+        <div className="absolute inset-0">
           <img
             src="/images/photos/snow-covered-premium-fir.png"
             alt=""
@@ -33,14 +34,14 @@ export const HeroSection = () => {
             loading="eager"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-surface-dark/30 via-transparent to-surface-dark lg:bg-gradient-to-r lg:from-surface-dark/98 lg:via-surface-dark/45 lg:to-transparent" />
+        <div className={styles.imageBlend} />
       </motion.div>
 
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
-        className="relative z-10 flex items-center w-full lg:absolute lg:inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-28"
+        className={styles.content}
       >
-        <div className="max-w-xl lg:max-w-[34rem]">
+        <div className={styles.contentInner}>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -57,7 +58,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
+              <span className={`${styles.display} block font-display text-primary tracking-tight`}>
                 Элитные
               </span>
             </motion.span>
@@ -66,7 +67,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-primary leading-[0.92] tracking-tight">
+              <span className={`${styles.display} block font-display text-primary tracking-tight`}>
                 ёлки
               </span>
             </motion.span>
@@ -75,7 +76,7 @@ export const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="block font-display text-4xl sm:text-7xl md:text-8xl text-accent italic leading-[0.92] tracking-tight">
+              <span className={`${styles.display} block font-display text-accent italic tracking-tight`}>
                 для вашего праздника
               </span>
             </motion.span>
@@ -92,11 +93,13 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.3, ease: 'easeOut' }}
-            className="text-sm sm:text-lg text-text-muted/90 mb-6 sm:mb-10 max-w-md leading-relaxed"
+            className={`${styles.description} mb-6 text-text-muted/90 sm:mb-10`}
           >
-            Свежайшие новогодние ёлки с доставкой по Москве и области.
+            Новогодняя традиция в её самом красивом воплощении.
             <br className="hidden sm:block" />
             Выберите размер, а об остальном позаботимся мы.
+            <br className="hidden sm:block" />
+            Бережная доставка по Москве и области.
           </motion.p>
 
           <motion.div

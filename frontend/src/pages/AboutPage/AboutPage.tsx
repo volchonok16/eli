@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { SectionHeading } from '@/shared/components';
 
 export const AboutPage = () => (
-  <div className="min-h-screen bg-surface">
-    <section className="py-16 bg-surface-dark">
+  <div className="internal-page min-h-screen bg-surface">
+    <section className="page-hero">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">О компании «Премиум ель»</h1>
-          <p className="text-text-muted text-lg max-w-xl">С 2023 года создаём праздник в каждом доме</p>
+          <h1 className="page-title mb-4">О компании «Премиум ель»</h1>
+          <p className="page-subtitle">С 2023 года создаём праздник в каждом доме</p>
         </motion.div>
       </div>
     </section>

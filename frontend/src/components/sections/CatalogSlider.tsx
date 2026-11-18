@@ -1,12 +1,14 @@
-import { useRef } from "react";
-import { useScroll } from "framer-motion";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { productsApi } from "@/api/endpoints/products";
 import type { ProductResponse } from "@/api/endpoints/products";
-import { SlideItem, Dot, type Slide } from "./ui";
+import { resolveProductImage } from "@/shared/utils/mediaUrl";
+import { SlideItem, type Slide } from "./ui";
+import styles from './CatalogSlider.module.css';
 
 function productToSlide(p: ProductResponse): Slide {
-  const image = p.images?.[0]?.url ?? "";
+  const image = p.images?.[0] ? resolveProductImage(p.images[0]) : "/images/spruce-blue.svg";
   return {
     id: p.id,
     title: p.name,
@@ -28,7 +30,14 @@ const defaultSlide: Slide = {
 
 export const StickyShowcase = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "featured-slides"],
@@ -37,14 +46,31 @@ export const StickyShowcase = () => {
   });
 
   const slides: Slide[] = products?.length ? products.map(productToSlide).slice(0, 4) : [defaultSlide];
-  const slideHeight = 1 / slides.length;
+  const [activeSlide, setActiveSlide] = useState(0);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  const trackX = useTransform(scrollYProgress, (progress) => isMobile ? 0 : -(trackRef.current?.clientWidth ?? window.innerWidth) * Math.max(0, slides.length - 1) * progress);
+
+  const scrollToSlide = (index: number) => {
+    if (!containerRef.current) return;
+    if (isMobile) {
+      trackRef.current?.children[index]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      return;
+    }
+    const containerTop = window.scrollY + containerRef.current.getBoundingClientRect().top;
+    const scrollRange = containerRef.current.offsetHeight - window.innerHeight;
+    const progress = slides.length > 1 ? index / (slides.length - 1) : 0;
+    window.scrollTo({ top: containerTop + scrollRange * progress, behavior: 'smooth' });
+  };
+
+  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    if (isMobile) return;
+    setActiveSlide(Math.round(progress * (slides.length - 1)));
+  });
 
   return (
-    <div ref={containerRef} className="relative bg-primary" style={{ height: `${slides.length * 100}vh` }}>
-      <div className="absolute inset-0 opacity-10">
-        <img src="/images/photos/evening-winter-showcase.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-      </div>
-      <div className="sticky top-0 h-screen flex items-center overflow-hidden">
+    <div ref={containerRef} className={styles.showcase} style={{ '--showcase-count': slides.length } as CSSProperties}>
+      <div className={styles.stage}>
+        <div className={styles.atmosphere} aria-hidden="true" />
         {isLoading ? (
           <div className="absolute inset-0 flex items-center">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-16 sm:py-0">
@@ -61,15 +87,34 @@ export const StickyShowcase = () => {
             </div>
           </div>
         ) : (
-          slides.map((slide, i) => (
-            <SlideItem key={slide.id || i} slide={slide} index={i} slideHeight={slideHeight} scrollYProgress={scrollYProgress} />
-          ))
+          <>
+            <motion.div ref={trackRef} className={`${styles.track} relative z-10`} style={{ x: trackX }} onScroll={(event) => {
+              if (!isMobile) return;
+              const target = event.currentTarget;
+              const width = target.clientWidth;
+              if (width) setActiveSlide(Math.round(target.scrollLeft / width));
+            }}>
+              {slides.map((slide, i) => (
+                <SlideItem key={slide.id || i} slide={slide} index={i} />
+              ))}
+            </motion.div>
+            <div className={`${styles.controls} glass-panel`}>
+              <button type="button" aria-label="Предыдущий товар" onClick={() => {
+                scrollToSlide(Math.max(0, activeSlide - 1));
+              }}>‹</button>
+              <div className={styles.dots} style={{ '--active-index': activeSlide } as CSSProperties}>
+                {slides.map((_, i) => (
+                  <button key={i} type="button" aria-label={`Показать товар ${i + 1}`} aria-pressed={activeSlide === i} onClick={() => scrollToSlide(i)}>
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+              <button type="button" aria-label="Следующий товар" onClick={() => {
+                scrollToSlide(Math.min(slides.length - 1, activeSlide + 1));
+              }}>›</button>
+            </div>
+          </>
         )}
-        <div className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 sm:gap-3 z-20">
-          {slides.map((_, i) => (
-            <Dot key={i} index={i} total={slides.length} scrollYProgress={scrollYProgress} />
-          ))}
-        </div>
       </div>
     </div>
   );

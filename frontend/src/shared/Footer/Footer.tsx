@@ -38,7 +38,7 @@ export const Footer = () => (
         </div>
       </div>
 
-      <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-primary-light/20 text-center text-text-inverse/30 text-xs sm:text-sm">
+      <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 border-t border-white/15 text-center text-text-inverse/70 text-xs sm:text-sm">
         © {new Date().getFullYear()} Eli. Все права защищены.
       </div>
     </div>

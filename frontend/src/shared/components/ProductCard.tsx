@@ -32,30 +32,24 @@ export const ProductCard = ({ id, name, sort, heightLabel, price, images, index 
       viewport={{ once: true, margin: '-50px' }}
       variants={fadeUp}
       transition={{ duration: 0.45, delay: index * 0.1 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: `perspective(800px) rotateX(${values.rotateX}deg) rotateY(${values.rotateY}deg) scale(${values.scale})`,
-        boxShadow: values.isHovered
-          ? `${values.shadowX}px ${values.shadowY}px 40px rgba(28, 25, 23, 0.12)`
-          : 'none',
-      }}
+       onMouseMove={handleMouseMove}
+       onMouseLeave={handleMouseLeave}
       className="card group cursor-pointer transition-shadow duration-300 origin-center"
     >
       <Link to={`/product/${id}`} className="block">
-        <div className="aspect-[4/5] bg-surface-dark flex items-center justify-center overflow-hidden relative">
+          <div className="relative mx-[10px] mt-[10px] flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[15px] border border-[#afc4b37a] bg-[radial-gradient(ellipse_at_50%_35%,#fcfdf7,#e5e9da)]">
           <motion.div
             className="absolute inset-0 bg-gradient-to-t from-primary/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{ scale: values.isHovered ? 1.05 : 1 }}
+              style={{ scale: values.isHovered ? 1.05 : 1 }}
           />
           {image ? (
             <motion.img
               src={image}
               alt={name}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-contain"
               loading="lazy"
-              style={{ scale: values.isHovered ? 1.08 : 1 }}
-              transition={{ duration: 0.6 }}
+              style={{ scale: values.isHovered ? 1.035 : 1 }}
+              transition={{ duration: 0.7, ease: [0.2, 0.65, 0.2, 1] }}
             />
           ) : (
             <div className="text-center">
@@ -66,17 +60,17 @@ export const ProductCard = ({ id, name, sort, heightLabel, price, images, index 
             </div>
           )}
         </div>
-        <div className="p-6">
+        <div className="flex h-full min-h-[260px] flex-col px-6 py-[21px]">
           {sort && (
             <p className="text-xs text-text-muted/50 uppercase tracking-widest mb-2 font-medium">{sort}</p>
           )}
-          <h3 className="font-serif text-xl text-primary mb-2 group-hover:text-accent transition-colors duration-300 leading-tight">
+          <h3 className="mb-2 min-h-[62px] font-serif text-[29px] leading-[1.08] tracking-[-0.025em] text-[#1a4432] group-hover:text-accent transition-colors duration-300">
             {name}
           </h3>
           {heightLabel && (
-            <p className="text-text-muted text-sm mb-4">{heightLabel} м</p>
+            <p className="mb-4 text-xs text-[#516b59]">{heightLabel} м</p>
           )}
-          <p className="font-sans text-xl text-accent font-semibold">{formatPrice(price)}</p>
+          <p className="mt-auto pt-[18px] font-sans text-[21px] font-semibold tracking-[-0.035em] text-[#174b36]">{formatPrice(price)}</p>
         </div>
       </Link>
     </motion.article>

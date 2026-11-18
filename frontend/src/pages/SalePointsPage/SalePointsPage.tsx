@@ -5,12 +5,12 @@ export const SalePointsPage = () => {
   const { data: points, isLoading, isError } = useSalePoints();
 
   return (
-    <div className="min-h-screen bg-surface">
-      <section className="py-16 bg-surface-dark">
+    <div className="internal-page min-h-screen bg-surface">
+      <section className="page-hero">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Наши ёлочные базары</h1>
-            <p className="text-text-muted text-lg max-w-xl">
+            <h1 className="page-title mb-4">Наши ёлочные базары</h1>
+            <p className="page-subtitle">
               Удобные точки продаж по всей Москве и области. Выберите ближайший базар и заберите свою ель.
             </p>
           </motion.div>
@@ -19,8 +19,8 @@ export const SalePointsPage = () => {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="aspect-[21/9] bg-surface-dark border border-surface-muted flex items-center justify-center mb-12">
-            <div className="text-center">
+          <div className="sale-points-map mb-12">
+            <div className="sale-points-map-content">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={0.5} stroke="currentColor" className="w-16 h-16 text-primary/10 mx-auto mb-3">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -65,7 +65,7 @@ export const SalePointsPage = () => {
                   className="card p-6"
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <span className={`w-2 h-2 rounded-full ${point.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className={`w-2 h-2 rounded-full ${point.isActive ? 'bg-success' : 'bg-text-muted/50'}`} />
                     <span className="text-xs text-text-muted uppercase tracking-wider">
                       {point.isActive ? 'Работает' : 'Не работает'}
                     </span>

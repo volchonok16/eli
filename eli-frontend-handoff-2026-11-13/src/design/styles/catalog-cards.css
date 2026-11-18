@@ -1,0 +1,25 @@
+/* Milk display cases on a cool sage ground. */
+.grid:has(>.catalog-product-link){position:relative;padding:24px;background:linear-gradient(135deg,#e3ebe2,#edf0e7 55%,#dce7df);border:1px solid #c2d1c4;border-radius:32px;gap:26px}
+.catalog-product-link{border-radius:23px;min-width:0}
+.catalog-product-link .atelier-product{display:flex;flex-direction:column;position:relative;border:1px solid #8fae9999;border-radius:23px;background:linear-gradient(155deg,#fffef9,#f8f8f0);box-shadow:inset 0 1px 0 #fff,0 4px 8px #1c493b09,0 16px 28px -16px #214a3d45;transition:border-color .3s,box-shadow .3s;overflow:hidden}
+.catalog-product-link .atelier-product::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;box-shadow:inset 0 2px 0 #fff,inset 1px 0 0 #ffffff9c;transition:box-shadow .3s}
+.catalog-product-link .atelier-product:hover,.catalog-product-link:focus-visible .atelier-product{transform:none!important;border-color:#3c7255;box-shadow:0 0 0 1px #477b574d,0 12px 32px #234f3a24}
+.catalog-product-link:hover .atelier-product::before,.catalog-product-link:focus-visible .atelier-product::before{box-shadow:inset 0 2px 0 #e4f8e8,inset 1px 0 0 #b0d3b7}
+.catalog-product-link .atelier-product>div:first-child{margin:10px 10px 0;border:1px solid #afc4b37a;border-radius:15px;background:radial-gradient(ellipse at 50% 30%,#f9fbf3,#dce7d8);isolation:isolate}
+.catalog-product-link .atelier-product>div.p-6{display:flex;flex:1;flex-direction:column;padding:21px 22px 23px}
+.catalog-product-link .atelier-product h3{font-size:29px;line-height:1.08;min-height:62px;color:#1a4432;letter-spacing:-.025em}
+.catalog-product-link .atelier-product [class*="text-text-muted/50"]{color:#4c6a56;letter-spacing:.15em;font-size:9px;font-weight:500}
+.catalog-product-link .atelier-product p.text-sm{font-size:12px;color:#516b59}
+.catalog-product-link .atelier-product p.catalog-availability{margin-top:0;margin-bottom:16px;min-height:18px;font-size:11px;color:#42654d}
+.catalog-buyrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;border-top:1px solid #a5bfa962;padding-top:18px}
+.catalog-product-link .atelier-product .catalog-price{font-size:21px;font-weight:600;letter-spacing:-.035em;line-height:1.25;color:#174b36;white-space:nowrap}
+.catalog-details{flex-shrink:0;display:inline-flex;align-items:center;gap:13px;padding:11px 14px;min-height:44px;border:1px solid #84ad93;border-radius:13px;background:var(--fir-glass);box-shadow:var(--fir-glint);color:#fffdf5;font:500 11px/1 Inter,sans-serif;transition:box-shadow .3s,border-color .3s}
+.catalog-details b{font-size:17px;font-weight:400;transition:transform .3s}
+.catalog-product-link:hover .catalog-details,.catalog-product-link:focus-visible .catalog-details{border-color:#aed9bd;box-shadow:inset 0 2px 1px #e6ffecbb,0 5px 16px #234c3b2b}
+.catalog-product-link:hover .catalog-details b{transform:translate(2px,-2px)}
+.catalog-product-link .atelier-product span.absolute{font-size:9px;letter-spacing:.12em;padding:6px 10px;border-radius:10px}
+.catalog-product-link:focus-visible{outline:3px solid #2e6548;outline-offset:5px}
+@media(max-width:1100px) and (min-width:1024px){.catalog-product-link .atelier-product>div.p-6{padding:20px 16px}.catalog-product-link .atelier-product .catalog-price{font-size:18px}.catalog-details{gap:8px;padding:10px}}
+@media(max-width:767px){.grid:has(>.catalog-product-link){padding:12px;gap:22px;border-radius:26px}.catalog-product-link .atelier-product>div.p-6{padding:21px 18px}.catalog-product-link .atelier-product h3{font-size:30px}.catalog-product-link .atelier-product .catalog-price{font-size:21px}.catalog-details{gap:10px;padding:11px 12px}}
+@media(max-width:360px){.catalog-product-link .atelier-product .catalog-price{font-size:18px}.catalog-details{padding:10px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.catalog-product-link .atelier-product,.catalog-product-link .atelier-product::before,.catalog-details,.catalog-details b{transition:none}.catalog-product-link:hover .catalog-details b{transform:none}}

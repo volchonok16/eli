@@ -1,0 +1,106 @@
+@tailwind components;
+
+@layer components {
+:where(.hero) {
+  position: relative;
+  display: grid;
+  width: calc(100% - 48px);
+  max-width: 1440px;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 24px auto 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 26px;
+  background: #e6ece3;
+  box-shadow: 0 12px 40px rgb(23 60 45 / 4%);
+}
+
+:where(.display) {
+  font-size: clamp(44px, 4.2vw, 66px);
+  line-height: 1.02;
+}
+
+:where(.image) {
+  position: relative;
+  order: 2;
+  width: 100%;
+  min-height: 620px;
+}
+
+:where(.hero > div:nth-child(2)) {
+  min-width: 0;
+}
+
+:where(.content) {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  order: 1;
+  width: 100%;
+  padding: 48px 36px;
+}
+
+:where(.contentInner) {
+  width: 100%;
+  max-width: 34rem;
+  min-width: 0;
+}
+
+:where(.description) {
+  max-width: 29rem;
+  color: #4c6355;
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+:where(.imageBlend) {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(230 236 227 / 7%), transparent 30%);
+}
+
+@media (max-width: 1023px) {
+  :where(.hero) {
+    width: calc(100% - 32px);
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 16px;
+  }
+
+  :where(.image) {
+    height: 380px;
+    min-height: 0;
+  }
+
+  :where(.content) {
+    padding: 32px;
+  }
+
+  :where(.display) {
+    font-size: clamp(40px, 6vw, 60px);
+  }
+}
+
+@media (max-width: 767px) {
+  :where(.hero) {
+    border-radius: 24px;
+  }
+
+  :where(.image) {
+    height: 310px;
+  }
+
+  :where(.content) {
+    padding: 28px 22px;
+  }
+
+  :where(.display) {
+    font-size: 42px;
+  }
+
+  :where(.description) {
+    font-size: 17px;
+  }
+}
+}

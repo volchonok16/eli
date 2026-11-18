@@ -50,7 +50,7 @@ const AnimatedRing = ({ progress, size, strokeWidth, label, suffix, maxValue }: 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#CA8A04"
+            stroke="#d0d4be"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -58,7 +58,7 @@ const AnimatedRing = ({ progress, size, strokeWidth, label, suffix, maxValue }: 
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-display text-2xl md:text-3xl text-accent">{display}{suffix}</span>
+          <span className="font-display text-2xl md:text-3xl text-[#d0d4be]">{display}{suffix}</span>
         </div>
       </div>
       <p className="text-text-inverse/50 text-xs mt-3 text-center">{label}</p>

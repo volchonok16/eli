@@ -38,7 +38,7 @@ export const Testimonials = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.5, delay: index * 0.15 }}
-          className="card p-5 sm:p-6 lg:p-8 flex flex-col"
+          className="card glass-panel p-5 sm:p-6 lg:p-8 flex flex-col"
         >
           <div className="flex gap-1 mb-4">
             {Array.from({ length: t.rating }).map((_, i) => (

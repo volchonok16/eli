@@ -6,6 +6,7 @@ import { useAddToCart } from '@/pages/CartPage/useCart';
 import { resolveProductImage } from '@/shared/utils/mediaUrl';
 import { useAuth } from '@/shared/contexts';
 import { handleApiError } from '@/api/errorHandler';
+import styles from './ProductPage.module.css';
 
 const formatPrice = (v: number) => `от ${v.toLocaleString()} ₽`;
 
@@ -34,7 +35,7 @@ export const ProductPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="internal-page min-h-screen flex items-center justify-center bg-surface">
         <div className="space-y-8 w-full max-w-6xl px-4">
           <div className="h-8 bg-surface-dark rounded w-1/3 animate-pulse" />
           <div className="grid lg:grid-cols-2 gap-12">
@@ -63,7 +64,7 @@ export const ProductPage = () => {
   const mainImage = resolveProductImage(images[activeImage]);
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="internal-page min-h-screen bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         <Link to="/catalog" className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-primary transition-colors mb-8">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -72,20 +73,20 @@ export const ProductPage = () => {
           Вернуться в каталог
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
+        <div className={`${styles.layout} grid gap-8 lg:grid-cols-2 lg:gap-16`}>
           <div className="space-y-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
-              className="relative aspect-[4/5] bg-surface-dark overflow-hidden group"
+              className={`${styles.gallery} glass-panel relative aspect-[4/5] overflow-hidden group`}
             >
               <AnimatePresence mode="wait">
                 <motion.img
                   key={activeImage}
                   src={mainImage}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full rounded-[17px] object-contain"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -108,7 +109,8 @@ export const ProductPage = () => {
                   <button
                     key={img.id}
                     onClick={() => setActiveImage(idx)}
-                    className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 border-2 transition-colors overflow-hidden ${
+                    aria-pressed={idx === activeImage}
+                    className={`${styles.thumbnail} glass-panel h-20 w-20 shrink-0 overflow-hidden border-2 transition-colors sm:h-24 sm:w-24 ${
                       idx === activeImage ? 'border-accent' : 'border-surface-muted hover:border-primary/30'
                     }`}
                   >
@@ -119,7 +121,7 @@ export const ProductPage = () => {
             )}
           </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+          <motion.div className={`${styles.info} glass-panel`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <div className="flex flex-wrap items-center gap-3 mb-4">
               {product.sort && (
                 <span className="text-xs uppercase tracking-[0.2em] text-text-muted/60 font-medium">{product.sort}</span>
@@ -154,21 +156,21 @@ export const ProductPage = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
               {product.heightLabel && (
-                <div className="card p-4">
+                <div className="card glass-panel rounded-2xl p-4">
                   <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">Высота</p>
                   <p className="text-primary font-medium">{product.heightLabel} м</p>
                 </div>
               )}
               {product.quantity > 0 && (
-                <div className="card p-4">
+                <div className="card glass-panel rounded-2xl p-4">
                   <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">В наличии</p>
                   <p className="text-primary font-medium">{product.quantity - product.reserved} шт</p>
                 </div>
               )}
               {product.inStock && (
-                <div className="card p-4">
+                <div className="card glass-panel rounded-2xl p-4">
                   <p className="text-[10px] text-text-muted/50 uppercase tracking-widest mb-1">Статус</p>
-                  <p className="text-green-700 font-medium text-sm">В наличии</p>
+                  <p className="text-success font-medium text-sm">В наличии</p>
                 </div>
               )}
             </div>
@@ -177,12 +179,12 @@ export const ProductPage = () => {
               <p className="text-sm text-text-muted mb-4">Чтобы добавить товар в корзину, войдите в аккаунт.</p>
             )}
             {cartError && <p role="alert" className="text-error text-sm mb-4">{cartError}</p>}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <div className={`${styles.actions} mb-12 flex flex-col gap-4 sm:flex-row`}>
               <button
                 onClick={handleAddToCart}
                 disabled={addToCart.isPending || added}
                 className={`btn-primary flex-1 text-sm sm:text-base px-8 py-4 transition-all duration-300 ${
-                  added ? 'bg-green-700 scale-95' : ''
+                  added ? 'bg-success scale-95' : ''
                 }`}
               >
                 {!isAuthenticated ? 'Войти и добавить в корзину' : added ? 'Добавлено ✓' : addToCart.isPending ? 'Добавление...' : 'Добавить в корзину'}
@@ -193,7 +195,7 @@ export const ProductPage = () => {
             </div>
 
             {product.careGuide && (
-              <div className="border-t border-surface-muted pt-8">
+              <div className={`${styles.care} border-t border-surface-muted pt-8`}>
                 <h2 className="font-serif text-xl text-primary mb-4">Рекомендации по уходу</h2>
                 <div className="text-text-muted/70 text-sm leading-relaxed whitespace-pre-line">
                   {product.careGuide}
@@ -204,7 +206,7 @@ export const ProductPage = () => {
         </div>
 
         {product.description && product.description.length > 200 && (
-          <div className="mt-16 border-t border-surface-muted pt-12">
+          <div className={`${styles.description} glass-panel mt-16 border-t border-surface-muted pt-12`}>
             <h2 className="font-serif text-2xl text-primary mb-6">Описание</h2>
             <div className="text-text-muted/80 leading-relaxed max-w-3xl whitespace-pre-line">
               {product.description}

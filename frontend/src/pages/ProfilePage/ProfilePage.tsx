@@ -10,9 +10,9 @@ export const ProfilePage = () => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="internal-page min-h-screen bg-surface">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-4xl text-primary mb-12">
+        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="page-title mb-12">
           Личный кабинет
         </motion.h1>
 

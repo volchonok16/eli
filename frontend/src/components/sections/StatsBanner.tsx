@@ -8,13 +8,16 @@ export const StatsBanner = () => {
   ];
 
   return (
-    <section className="py-20 bg-primary relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
-        <img src="/images/photos/premium-christmas-tree-collection.png" alt="" className="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-      </div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(202,138,4,0.08),transparent_70%)]" />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="stats-banner relative overflow-hidden py-20 text-text-inverse">
+      <img
+        src="/images/photos/premium-christmas-tree-collection.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+        loading="lazy"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(18,55,45,0.9),rgba(18,55,45,0.72)_55%,rgba(18,55,45,0.52))]" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           title="Премиум ель в цифрах"
           subtitle="Три года помогаем создавать новогоднее настроение"

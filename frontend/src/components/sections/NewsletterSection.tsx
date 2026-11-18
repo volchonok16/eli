@@ -43,7 +43,7 @@ export const NewsletterSection = () => {
             Сезонные новинки, советы по уходу и специальные предложения — без спама
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="glass-form mx-auto flex max-w-xl flex-col gap-3 p-5 sm:flex-row sm:p-7">
             <label htmlFor="newsletter-email" className="sr-only">Email для рассылки</label>
             <input
               id="newsletter-email"

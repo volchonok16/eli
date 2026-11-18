@@ -5,29 +5,31 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1C1917',
-          light: '#44403C',
-          dark: '#0C0A09',
+          DEFAULT: '#193E33',
+          light: '#285845',
+          dark: '#12372D',
         },
         accent: {
-          DEFAULT: '#CA8A04',
-          light: '#EAB308',
-          dark: '#A16207',
+          DEFAULT: '#2B6651',
+          light: '#39785C',
+          dark: '#194B3C',
         },
+        success: '#2B6651',
+        error: '#9B4D45',
         surface: {
-          DEFAULT: '#FAFAF9',
-          dark: '#F5F5F4',
-          muted: '#E7E5E4',
+          DEFAULT: '#F6F4ED',
+          dark: '#E4EAE1',
+          muted: '#DCE7DD',
         },
         text: {
-          DEFAULT: '#0C0A09',
-          muted: '#78716C',
-          inverse: '#FAFAF9',
+          DEFAULT: '#193E33',
+          muted: '#53665C',
+          inverse: '#FFFDF7',
         },
       },
       fontFamily: {
         display: ['Cormorant', 'serif'],
-        serif: ['Playfair Display', 'serif'],
+        serif: ['Cormorant', 'Georgia', 'serif'],
         sans: ['Inter', 'sans-serif'],
       },
       backdropBlur: {

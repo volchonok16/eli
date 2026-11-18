@@ -33,12 +33,12 @@ export const WholesalePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface">
-      <section className="py-16 bg-surface-dark">
+    <div className="internal-page min-h-screen bg-surface">
+      <section className="page-hero">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Ёлки оптом</h1>
-            <p className="text-text-muted text-lg max-w-xl">
+            <h1 className="page-title mb-4">Ёлки оптом</h1>
+            <p className="page-subtitle">
               Специальные условия для организаций. Гибкие цены, персональный менеджер, доставка по графику.
             </p>
           </motion.div>
@@ -85,7 +85,7 @@ export const WholesalePage = () => {
 
             {success ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md mx-auto">
-                <p className="text-green-700 text-lg mb-2">Заявка отправлена!</p>
+                <p className="text-success text-lg mb-2">Заявка отправлена!</p>
                 <p className="text-text-muted text-sm">Менеджер свяжется с вами в ближайшее время</p>
               </motion.div>
             ) : (

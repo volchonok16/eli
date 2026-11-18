@@ -56,7 +56,7 @@ interface IconBoxProps {
 }
 
 export const IconBox = ({ icon, className = '' }: IconBoxProps) => (
-  <div className={`w-12 h-12 bg-accent/10 flex items-center justify-center mb-6 ${className}`}>
+  <div className={`flex h-12 w-12 items-center justify-center rounded-[15px] border border-white/80 bg-accent/10 mb-6 text-accent ${className}`}>
     {icon}
   </div>
 );

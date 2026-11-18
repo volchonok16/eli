@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { SectionHeading, Card, IconBox } from '@/shared/components';
+import { SectionHeading, IconBox } from '@/shared/components';
 
 const benefits = [
   {
@@ -59,11 +59,8 @@ const benefits = [
 ];
 
 export const BenefitsSection = () => (
-  <section className="py-24 bg-surface-dark relative overflow-hidden">
-    <div className="absolute inset-0 opacity-[0.03]">
-      <img src="/images/photos/fresh-fir-needle-detail.png" alt="" className="w-full h-full object-cover scale-125" aria-hidden="true" loading="lazy" />
-    </div>
-    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <section className="py-24 bg-surface-dark">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
         title="Почему выбирают нас"
         subtitle="От выбора и хранения до доставки, установки и утилизации — берём заботу о праздничном дереве на себя"
@@ -78,11 +75,11 @@ export const BenefitsSection = () => (
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.45, delay: index * 0.08 }}
           >
-            <Card>
+            <article className="card glass-service p-5 sm:p-6 lg:p-8">
               <IconBox icon={benefit.icon} />
               <h3 className="font-serif text-xl text-primary mb-3">{benefit.title}</h3>
               <p className="text-text-muted leading-relaxed">{benefit.description}</p>
-            </Card>
+            </article>
           </motion.div>
         ))}
       </div>

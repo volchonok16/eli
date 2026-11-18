@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 import { useCreateOrder } from './hooks/useCheckout';
 import { useCart } from '@/pages/CartPage/useCart';
+import styles from './CheckoutPage.module.css';
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -57,12 +58,12 @@ export const CheckoutPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="internal-page min-h-screen bg-surface">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display text-4xl text-primary mb-12"
+          className="page-title mb-12"
         >
           Оформление заказа
         </motion.h1>
@@ -74,7 +75,7 @@ export const CheckoutPage = () => {
                 <p className="text-error text-sm bg-error/5 border border-error/20 p-3">{error}</p>
               )}
 
-              <section>
+              <section className={`${styles.section} glass-panel`}>
                 <h2 className="font-serif text-xl text-primary mb-4">Контактные данные</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <input
@@ -103,10 +104,10 @@ export const CheckoutPage = () => {
                 </div>
               </section>
 
-              <section>
+              <section className={`${styles.section} glass-panel`}>
                 <h2 className="font-serif text-xl text-primary mb-4">Способ получения</h2>
                 <div className="space-y-3">
-                  <label className="card p-4 flex items-center gap-4 cursor-pointer">
+                  <label className={`${styles.choice} card flex cursor-pointer items-center gap-4 p-4`}>
                     <input
                       type="radio"
                       name="delivery"
@@ -120,7 +121,7 @@ export const CheckoutPage = () => {
                       <p className="text-sm text-text-muted">Выберите удобную точку на карте</p>
                     </div>
                   </label>
-                  <label className="card p-4 flex items-center gap-4 cursor-pointer">
+                  <label className={`${styles.choice} card flex cursor-pointer items-center gap-4 p-4`}>
                     <input
                       type="radio"
                       name="delivery"
@@ -138,7 +139,7 @@ export const CheckoutPage = () => {
               </section>
 
               {delivery === 'courier' && (
-                <section>
+                <section className={`${styles.section} glass-panel`}>
                   <h2 className="font-serif text-xl text-primary mb-4">Адрес доставки</h2>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <input
@@ -153,7 +154,7 @@ export const CheckoutPage = () => {
             </div>
 
             <div className="lg:col-span-2">
-              <div className="card p-6 sticky top-24">
+              <div className={`${styles.summary} glass-panel`}>
                 <h2 className="font-serif text-xl text-primary mb-6">Ваш заказ</h2>
                 {cartItems.length > 0 ? (
                   <div className="space-y-3 text-sm mb-4">

@@ -1,0 +1,28 @@
+@tailwind components;
+
+@layer components {
+:where(.row) {
+  overflow: hidden;
+  border: 1px solid rgb(246 255 247 / 74%);
+  border-radius: 18px;
+  background: var(--glass-fill);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(3px) saturate(1.15);
+}
+
+:where(.trigger) {
+  background: transparent;
+}
+
+:where(.trigger[aria-expanded='true']) {
+  background: rgb(216 236 216 / 30%);
+  color: var(--fir-deep);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :where(.row) {
+    background: var(--paper);
+    backdrop-filter: none;
+  }
+}
+}

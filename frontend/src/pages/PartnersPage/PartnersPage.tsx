@@ -47,12 +47,12 @@ export const PartnersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface">
-      <section className="py-16 bg-surface-dark">
+    <div className="internal-page min-h-screen bg-surface">
+      <section className="page-hero">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="font-display text-4xl md:text-5xl text-primary mb-4">Сотрудничество</h1>
-            <p className="text-text-muted text-lg max-w-xl">
+            <h1 className="page-title mb-4">Сотрудничество</h1>
+            <p className="page-subtitle">
               Сдайте участок под ёлочный базар и получите стабильный доход в декабре
             </p>
           </motion.div>
@@ -94,7 +94,7 @@ export const PartnersPage = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="card p-8 text-center"
               >
-                <p className="text-green-700 text-lg mb-2">Заявка отправлена!</p>
+                <p className="text-success text-lg mb-2">Заявка отправлена!</p>
                 <p className="text-text-muted text-sm">Менеджер свяжется с вами в ближайшее время</p>
               </motion.div>
             ) : (
