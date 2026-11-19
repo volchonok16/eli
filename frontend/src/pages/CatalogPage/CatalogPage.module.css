@@ -23,30 +23,34 @@
 }
 
 :where(.categories) {
-  flex: 1 1 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  gap: 6px;
-  padding: 3px 2px 7px;
-  scrollbar-width: thin;
-  scrollbar-color: #93b29e transparent;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow: visible;
+  padding: 4px 0;
 }
 
 :where(.filterInner > div:last-child) {
   flex: 0 0 216px;
 }
 
-:where(.categories button) {
-  min-height: 44px;
+.categories button {
+  min-height: 42px;
+  max-width: 100%;
   flex: 0 0 auto;
-  padding: 11px 17px;
-  font-size: 15px;
-  line-height: 1.5;
-  white-space: nowrap;
+  padding: 9px 17px;
+  border: 1px solid rgb(142 181 154 / 36%);
+  border-radius: 999px;
+  background: rgb(255 253 247 / 62%);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
   color: #385446;
+  transition: background-color 180ms, border-color 180ms, color 180ms, box-shadow 180ms;
 }
 
-:where(.categories button[aria-pressed='true']) {
+.categories button[aria-pressed='true'] {
   border: 1px solid rgb(142 181 154 / 80%);
   background: var(--fir-glass);
   box-shadow: var(--fir-glint);
@@ -54,7 +58,8 @@
   font-weight: 600;
 }
 
-:where(.categories button:not([aria-pressed='true']):hover) {
+.categories button:not([aria-pressed='true']):hover {
+  border-color: rgb(93 136 107 / 54%);
   background: rgb(199 220 202 / 40%);
   color: #143f2e;
 }
@@ -207,7 +212,7 @@
 
 @media (min-width: 768px) {
   :where(.categories) {
-    flex: 1 1 0;
+    flex: 1 1 auto;
   }
 }
 
@@ -229,22 +234,19 @@
 
   :where(.categories) {
     width: 100%;
-    padding: 3px 2px 7px;
-    scrollbar-width: none;
+    gap: 8px;
+    padding: 4px 0;
+    overflow: visible;
   }
 
   :where(.filterInner > div:last-child) {
     flex: 1 1 auto;
   }
 
-  :where(.categories button) {
-    min-height: 44px;
-    padding: 10px 15px;
-    font-size: 12px;
-  }
-
-  :where(.categories::-webkit-scrollbar) {
-    display: none;
+  .categories button {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
   }
 
   :where(.grid) {

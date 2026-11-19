@@ -35,8 +35,10 @@ function getStickyScrollRange(container: HTMLElement, stage: HTMLElement) {
 export const StickyShowcase = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const trackX = useMotionValue(0);
+  const slidePosition = useMotionValue(0);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
@@ -51,19 +53,28 @@ export const StickyShowcase = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const slides: Slide[] = products?.length ? products.map(productToSlide).slice(0, 4) : [defaultSlide];
+  const slides: Slide[] = products?.length
+    ? products.map(productToSlide).slice(0, 4)
+    : [defaultSlide];
   const [activeSlide, setActiveSlide] = useState(0);
   const { scrollY } = useScroll();
 
   useEffect(() => {
     const container = containerRef.current;
     const stage = stageRef.current;
+    const viewport = viewportRef.current;
     const track = trackRef.current;
-    if (!container || !stage || !track) return;
+    if (!container || !stage || !viewport || !track) return;
 
     const updatePosition = () => {
       if (isMobile) {
         trackX.set(0);
+        const slideWidth = viewport.clientWidth;
+        if (slideWidth) {
+          const position = viewport.scrollLeft / slideWidth;
+          slidePosition.set(position);
+          setActiveSlide(Math.round(position));
+        }
         return;
       }
 
@@ -73,13 +84,20 @@ export const StickyShowcase = () => {
       const progress = range
         ? Math.min(1, Math.max(0, (scrollY.get() - containerTop + stickyTop) / range))
         : 0;
-      trackX.set(-(track.scrollWidth - track.clientWidth) * progress);
+      slidePosition.set(progress * (slides.length - 1));
+      const firstSlide = track.children[0] as HTMLElement | undefined;
+      const lastSlide = track.children[slides.length - 1] as HTMLElement | undefined;
+      const travelDistance = firstSlide && lastSlide
+        ? lastSlide.getBoundingClientRect().left - firstSlide.getBoundingClientRect().left
+        : 0;
+      trackX.set(-travelDistance * progress);
       setActiveSlide(Math.round(progress * (slides.length - 1)));
     };
 
     const resizeObserver = new ResizeObserver(updatePosition);
     resizeObserver.observe(container);
     resizeObserver.observe(stage);
+    resizeObserver.observe(viewport);
     resizeObserver.observe(track);
     const unsubscribe = scrollY.on("change", updatePosition);
     window.addEventListener("resize", updatePosition);
@@ -90,12 +108,15 @@ export const StickyShowcase = () => {
       unsubscribe();
       window.removeEventListener("resize", updatePosition);
     };
-  }, [isLoading, isMobile, scrollY, slides.length, trackX]);
+  }, [isLoading, isMobile, scrollY, slides.length, slidePosition, trackX]);
 
   const scrollToSlide = (index: number) => {
     if (!containerRef.current) return;
     if (isMobile) {
-      trackRef.current?.children[index]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      const viewport = viewportRef.current;
+      if (viewport) {
+        viewport.scrollTo({ left: index * viewport.clientWidth, behavior: 'smooth' });
+      }
       return;
     }
     const stage = stageRef.current;
@@ -128,16 +149,26 @@ export const StickyShowcase = () => {
           </div>
         ) : (
           <>
-            <motion.div ref={trackRef} className={`${styles.track} relative z-10`} style={{ x: trackX }} onScroll={(event) => {
-              if (!isMobile) return;
-              const target = event.currentTarget;
-              const width = target.clientWidth;
-              if (width) setActiveSlide(Math.round(target.scrollLeft / width));
-            }}>
-              {slides.map((slide, i) => (
-                <SlideItem key={slide.id || i} slide={slide} index={i} />
-              ))}
-            </motion.div>
+            <div
+              ref={viewportRef}
+              className={styles.viewport}
+              onScroll={(event) => {
+                if (!isMobile) return;
+                const target = event.currentTarget;
+                const width = target.clientWidth;
+                if (width) {
+                  const position = target.scrollLeft / width;
+                  slidePosition.set(position);
+                  setActiveSlide(Math.round(position));
+                }
+              }}
+            >
+              <motion.div ref={trackRef} className={styles.track} style={{ x: trackX }}>
+                {slides.map((slide, i) => (
+                  <SlideItem key={slide.id || i} slide={slide} index={i} slidePosition={slidePosition} />
+                ))}
+              </motion.div>
+            </div>
             <div className={`${styles.controls} glass-panel`}>
               <button type="button" aria-label="Предыдущий товар" onClick={() => {
                 scrollToSlide(Math.max(0, activeSlide - 1));
