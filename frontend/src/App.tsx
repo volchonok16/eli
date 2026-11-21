@@ -15,9 +15,11 @@ import { WholesalePage } from '@/pages/WholesalePage';
 import { SalePointsPage } from '@/pages/SalePointsPage';
 import { PartnersPage } from '@/pages/PartnersPage';
 import { PaymentFailPage, PaymentSuccessPage } from '@/pages/PaymentPage';
+import { YandexMetrika } from '@/shared/analytics/YandexMetrika';
 
 export const App = () => (
   <div className="flex min-h-screen flex-col">
+    <YandexMetrika />
     <Header />
     <main className="flex-1 pt-[80px] sm:pt-[116px]">
       <Routes>
