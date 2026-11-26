@@ -83,7 +83,7 @@ statsRouter.get("/dashboard", staffAuthMiddleware, async (_req, res) => {
     orderCounts.map((row) => [row.status, row._count._all])
   );
 
-  const productIds = topProducts.map((p) => p.productId);
+  const productIds = topProducts.flatMap((p) => (p.productId ? [p.productId] : []));
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
     select: { id: true, name: true, price: true },
@@ -104,11 +104,11 @@ statsRouter.get("/dashboard", staffAuthMiddleware, async (_req, res) => {
       delivering: countByStatus.DELIVERING ?? 0,
     },
     topProducts: topProducts.map((row) => {
-      const product = productMap.get(row.productId);
+      const product = row.productId ? productMap.get(row.productId) : undefined;
       const sold = row._sum.quantity ?? 0;
       const price = product ? Number(product.price) : 0;
       return {
-        name: product?.name ?? "Неизвестный товар",
+        name: product?.name ?? "Удалённый товар",
         sold,
         revenue: sold * price,
       };

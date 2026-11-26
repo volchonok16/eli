@@ -51,6 +51,7 @@ export async function releaseOrderReservation(orderId: string): Promise<void> {
 
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
+      if (!item.productId) continue;
       await tx.product.update({
         where: { id: item.productId },
         data: {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { Prisma } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { adminAuthMiddleware } from "../middleware/auth.js";
@@ -315,6 +315,28 @@ productsRouter.delete("/:id", adminAuthMiddleware, async (req, res) => {
     res.status(404).json({ error: "Товар не найден" });
     return;
   }
+
+  const openOrders = await prisma.orderItem.count({
+    where: {
+      productId: id,
+      order: {
+        status: {
+          notIn: [OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.FAILED],
+        },
+      },
+    },
+  });
+  if (openOrders > 0) {
+    res.status(409).json({
+      error: "Нельзя удалить товар: он есть в незавершённом заказе",
+    });
+    return;
+  }
+
+  await prisma.orderItem.updateMany({
+    where: { productId: id },
+    data: { productName: product.name },
+  });
 
   for (const image of product.images) {
     await deleteProductImage(image.key).catch(() => undefined);

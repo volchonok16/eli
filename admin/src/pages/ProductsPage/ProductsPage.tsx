@@ -20,8 +20,8 @@ export function ProductsPage() {
     try {
       await remove(deleteTarget.id);
       toast(`Товар «${deleteTarget.name}» удалён`, "success");
-    } catch {
-      toast("Не удалось удалить товар", "error");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Не удалось удалить товар", "error");
     } finally {
       setDeleteTarget(null);
     }
@@ -71,7 +71,7 @@ export function ProductsPage() {
       <ConfirmModal
         open={deleteTarget !== null}
         title="Удаление товара"
-        message={`Вы уверены, что хотите удалить «${deleteTarget?.name}»? Это действие нельзя отменить.`}
+        message={`Вы уверены, что хотите удалить «${deleteTarget?.name}»? Это можно сделать, только если товар не числится в незавершённых заказах. В закрытых заказах останется его название.`}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
         confirmLabel="Удалить"

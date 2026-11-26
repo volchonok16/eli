@@ -97,7 +97,8 @@ function serializeOrderListItem(order: {
     id: string;
     quantity: number;
     price: { toString(): string };
-    product: { name: string };
+    productName: string;
+    product: { name: string } | null;
   }[];
 }) {
   return {
@@ -123,7 +124,7 @@ function serializeOrderListItem(order: {
       id: item.id,
       quantity: item.quantity,
       price: Number(item.price),
-      productName: item.product.name,
+      productName: item.product?.name || item.productName || "Удалённый товар",
       subtotal: Number(item.price) * item.quantity,
     })),
   };
@@ -143,8 +144,12 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   let itemsTotal = 0;
-  const orderItems: { productId: string; quantity: number; price: number }[] =
-    [];
+  const orderItems: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    price: number;
+  }[] = [];
 
   for (const item of parsed.data.items) {
     const product = productMap.get(item.productId);
@@ -165,6 +170,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
     itemsTotal += price * item.quantity;
     orderItems.push({
       productId: product.id,
+      productName: product.name,
       quantity: item.quantity,
       price,
     });
@@ -249,7 +255,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
       redirectUrl: `${config.feUrl}/payment/success?order=${order.id}`,
       failRedirectUrl: `${config.feUrl}/payment/fail?order=${order.id}`,
       items: order.items.map((item) => ({
-        name: item.product.name,
+        name: item.product?.name || item.productName || "Удалённый товар",
         price: Number(item.price),
         quantity: item.quantity,
       })),
@@ -264,7 +270,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
     });
 
     const notifyItems = order.items.map((i) => ({
-      name: i.product.name,
+      name: i.product?.name || i.productName || "Удалённый товар",
       quantity: i.quantity,
     }));
     const deliveryLabel =
@@ -282,7 +288,7 @@ ordersRouter.post("/", optionalUserAuthMiddleware, async (req: AuthRequest, res)
         customerName: order.customerName,
         orderId: order.id,
         items: order.items.map((item) => ({
-          name: item.product.name,
+          name: item.product?.name || item.productName || "Удалённый товар",
           quantity: item.quantity,
           price: Number(item.price),
         })),
@@ -425,15 +431,17 @@ ordersRouter.get("/:id", async (req, res) => {
       id: item.id,
       quantity: item.quantity,
       price: Number(item.price),
-      productName: item.product.name,
+      productName: item.product?.name || item.productName || "Удалённый товар",
       subtotal: Number(item.price) * item.quantity,
-      product: {
-        ...item.product,
-        price: Number(item.product.price),
-        images: item.product.images
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((img) => ({ ...img, url: getImagePublicUrl(img.key) })),
-      },
+      product: item.product
+        ? {
+            ...item.product,
+            price: Number(item.product.price),
+            images: item.product.images
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((img) => ({ ...img, url: getImagePublicUrl(img.key) })),
+          }
+        : null,
     })),
   });
 });

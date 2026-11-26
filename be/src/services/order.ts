@@ -168,6 +168,8 @@ export async function completeOrderPayment(orderId: string): Promise<void> {
 
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
+      if (!item.product || !item.productId) continue;
+
       if (isHvoyaTrackedSku(item.product.sku)) {
         await tx.product.update({
           where: { id: item.productId },
@@ -214,7 +216,7 @@ export async function completeOrderPayment(orderId: string): Promise<void> {
       customerName: order.customerName,
       orderId,
       items: order.items.map((item) => ({
-        name: item.product.name,
+        name: item.product?.name || item.productName || "Удалённый товар",
         quantity: item.quantity,
         price: Number(item.price),
       })),
@@ -287,7 +289,7 @@ export async function advanceOrderStatus(
 async function restorePaidStock(order: ShopOrder): Promise<void> {
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
-      if (item.product.sku) continue;
+      if (!item.product || !item.productId || item.product.sku) continue;
       await tx.product.update({
         where: { id: item.productId },
         data: {
